@@ -1,0 +1,67 @@
+.woman-page {
+  min-height: 80vh;
+  background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%);
+  padding: 60px 40px;
+}
+
+.woman-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background: linear-gradient(135deg, #e91e63 0%, #ad1457 100%);
+  border-radius: 20px;
+  color: white;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(233, 30, 99, 0.35);
+  margin-bottom: 40px;
+}
+
+.woman-hero-icon {
+  font-size: 80px;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.woman-hero h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  letter-spacing: 1px;
+}
+
+.woman-hero p {
+  font-size: 1.1rem;
+  opacity: 0.85;
+}
+
+.woman-content {
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 4px 20px rgba(233, 30, 99, 0.1);
+  font-size: 1rem;
+  color: #555;
+  text-align: center;
+}
+
+/* ===== LU?I S?N PH?M ===== */
+.products-section {
+  margin-top: 32px;
+}
+
+.products-section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 16px;
+  border-left: 4px solid currentColor;
+  padding-left: 12px;
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}

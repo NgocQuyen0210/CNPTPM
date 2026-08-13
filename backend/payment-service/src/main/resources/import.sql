@@ -1,0 +1,1 @@
+-- Empty import script for payment service

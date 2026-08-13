@@ -1,0 +1,186 @@
+import React, { useState, useEffect, useRef } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { FaSearch, FaShoppingCart, FaHeart } from "react-icons/fa";
+import { useCart } from "../../context/CartContext";
+import { useFavorite } from "../../context/FavoriteContext";
+import authService from "../../services/authService";
+import productService from "../../services/productService";
+import "./header.css";
+
+function Header() {
+  const navigate = useNavigate();
+  const { totalItems } = useCart();
+  const { totalFavorites } = useFavorite();
+  const user = authService.getUser();
+
+  // Search and Autocomplete States
+  const [products, setProducts] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchRef = useRef(null);
+
+  useEffect(() => {
+    productService.getProducts()
+      .then(res => setProducts(res || []))
+      .catch(err => console.error("Lỗi tải sản phẩm cho tìm kiếm:", err));
+  }, []);
+
+  // Close suggestions dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    authService.logout();
+    navigate("/login");
+  };
+
+  const handleSearchSubmit = (e) => {
+    if (e) e.preventDefault();
+    if (searchTerm.trim() !== "") {
+      setShowSuggestions(false);
+      navigate(`/dashboard/menu?search=${encodeURIComponent(searchTerm.trim())}`);
+    }
+  };
+
+  const handleSuggestionClick = (prodId) => {
+    setSearchTerm("");
+    setShowSuggestions(false);
+    navigate(`/dashboard/product/${prodId}`);
+  };
+
+  const suggestions = searchTerm.trim() === "" ? [] : products.filter(p =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p.brand && p.brand.toLowerCase().includes(searchTerm.toLowerCase()))
+  ).slice(0, 5);
+
+  return (
+    <header className="header">
+      {/* Logo */}
+      <div className="header-logo">
+        <h1 onClick={() => navigate("/dashboard/menu")}>E-SHOP</h1>
+      </div>
+
+      {/* Nav links */}
+      <nav className="header-nav">
+        <ul>
+          <li>
+            <NavLink
+              to="/dashboard/menu"
+              className={({ isActive }) => (isActive ? "active" : "")}
+            >
+              Trang chủ
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to="/dashboard/about"
+              className={({ isActive }) => (isActive ? "active" : "")}
+            >
+              Giới thiệu
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to="/dashboard/contact"
+              className={({ isActive }) => (isActive ? "active" : "")}
+            >
+              Liên hệ
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to="/dashboard/favorite"
+              className={({ isActive }) => (isActive ? "active cart-link" : "cart-link")}
+            >
+              <FaHeart className="cart-icon" />
+              Yêu thích
+              {totalFavorites > 0 && <span className="cart-badge">{totalFavorites}</span>}
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to="/dashboard/cart"
+              className={({ isActive }) => (isActive ? "active cart-link" : "cart-link")}
+            >
+              <FaShoppingCart className="cart-icon" />
+              Giỏ hàng
+              {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
+            </NavLink>
+          </li>
+        </ul>
+      </nav>
+
+      {/* Search bar */}
+      <div className="header-search-wrapper" ref={searchRef}>
+        <form onSubmit={handleSearchSubmit} className="header-search-form">
+          <input 
+            type="text" 
+            placeholder="Tìm kiếm..." 
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            className="header-search-input"
+          />
+          <button type="submit" className="header-search-btn" title="Tìm kiếm">
+            <FaSearch />
+          </button>
+        </form>
+
+        {showSuggestions && suggestions.length > 0 && (
+          <div className="search-suggestions-dropdown">
+            {suggestions.map((s) => (
+              <div 
+                key={s.id} 
+                className="suggestion-item"
+                onClick={() => handleSuggestionClick(s.id)}
+              >
+                <img 
+                  src={s.featuredImage || "https://via.placeholder.com/50"} 
+                  alt={s.name} 
+                  className="suggestion-img" 
+                />
+                <div className="suggestion-info">
+                  <div className="suggestion-name">{s.name}</div>
+                  <div className="suggestion-price">{s.price?.toLocaleString("vi-VN")}đ</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Auth buttons */}
+      <div className="header-auth">
+        {user ? (
+          <>
+            <span className="user-greeting">Chào, {user.fullName || user.username}</span>
+            <button className="btn-logout" onClick={handleLogout}>
+              Đăng xuất
+            </button>
+          </>
+        ) : (
+          <>
+            <button className="btn-login" onClick={() => navigate("/login")}>
+              Đăng nhập
+            </button>
+            <button className="btn-signup" onClick={() => navigate("/sign-up")}>
+              Đăng ký
+            </button>
+          </>
+        )}
+      </div>
+    </header>
+  );
+}
+
+export default Header;
