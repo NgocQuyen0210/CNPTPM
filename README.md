@@ -34,13 +34,13 @@ graph TD
     AI -.->|Kết nối API| Gemini[Gemini AI Engine]
 ```
 
-### 1. Nguyên lý hoạt động cốt lõi:
-* **API Gateway (Cổng API - Port 9000):** Là điểm đầu mối duy nhất tiếp nhận tất cả các yêu cầu từ phía Client. Gateway thực hiện cơ chế điều hướng (Routing) thông minh đến các vi dịch vụ tương ứng dựa trên tiền tố đường dẫn (ví dụ: `/api/auth/*` điều hướng về `auth-service`, `/api/products/*` về `product-service`).
-* **Giao tiếp liên dịch vụ (Inter-service Communication):** Các vi dịch vụ giao tiếp đồng bộ với nhau thông qua **MicroProfile REST Client** của Quarkus. Điển hình, khi khách hàng tạo đơn hàng, `order-service` sẽ gửi yêu cầu trực tiếp sang `product-service` để kiểm tra và xác thực số lượng tồn kho của từng biến thể sản phẩm.
-* **Bảo mật phân tán với JWT (Stateless JWT Security):** 
-  - Khi người dùng đăng nhập thành công tại `auth-service`, dịch vụ này sẽ cấp một **JWT Token** được ký số bằng thuật toán mã hóa (chứa định danh và quyền hạn của người dùng).
-  - Khi gửi request qua API Gateway đến các service khác, token này được đính kèm vào Header.
-  - Các service độc lập tự giải mã và kiểm tra quyền hạn nội bộ thông qua thư viện **SmallRye JWT** tích hợp sẵn mà không cần phải truy vấn lại dịch vụ Auth, giúp giảm thiểu tối đa độ trễ hệ thống.
+### Nguyên lý hoạt động cốt lõi:
+1. **API Gateway (Cổng API - Port 9000):** Là điểm đầu mối duy nhất tiếp nhận tất cả các yêu cầu từ phía Client. Gateway thực hiện cơ chế điều hướng (Routing) thông minh đến các vi dịch vụ tương ứng dựa trên tiền tố đường dẫn (ví dụ: `/api/auth/*` điều hướng về `auth-service`, `/api/products/*` về `product-service`).
+2. **Giao tiếp liên dịch vụ (Inter-service Communication):** Các vi dịch vụ giao tiếp đồng bộ với nhau thông qua **MicroProfile REST Client** của Quarkus. Điển hình, khi khách hàng tạo đơn hàng, `order-service` sẽ gửi yêu cầu trực tiếp sang `product-service` để kiểm tra và xác thực số lượng tồn kho của từng biến thể sản phẩm.
+3. **Bảo mật phân tán với JWT (Stateless JWT Security):** 
+   - Khi người dùng đăng nhập thành công tại `auth-service`, dịch vụ này sẽ cấp một **JWT Token** được ký số bằng thuật toán mã hóa (chứa định danh và quyền hạn của người dùng).
+   - Khi gửi request qua API Gateway đến các service khác, token này được đính kèm vào Header.
+   - Các service độc lập tự giải mã và kiểm tra quyền hạn nội bộ thông qua thư viện **SmallRye JWT** tích hợp sẵn mà không cần phải truy vấn lại dịch vụ Auth, giúp giảm thiểu tối đa độ trễ hệ thống.
 
 ---
 
@@ -136,18 +136,33 @@ CREATE DATABASE product_db;
 CREATE DATABASE order_db;
 CREATE DATABASE payment_db;
 ```
-> [!TIP]
-> Bạn không cần tạo bảng hay chèn dữ liệu thủ công. Ở lần chạy đầu tiên, Quarkus Hibernate ORM sẽ tự động đọc cấu trúc class Java để tự động tạo bảng (DDL) và tự động nạp dữ liệu mẫu (sản phẩm, tài khoản mẫu) từ các tệp tin `import.sql` nằm trong các thư mục tài nguyên của dịch vụ.
 
-### 3. Cấu hình Gemini AI API Key (Tùy chọn)
-Để tính năng Chatbot AI tư vấn thông minh hoạt động tốt nhất, bạn cần chuẩn bị Google Gemini API Key. Bạn có hai cách cấu hình:
-* **Cách 1 (Khuyên dùng cho Backend):** Thiết lập biến môi trường trên máy tính hoặc IDE với tên là `GEMINI_API_KEY`.
-* **Cách 2 (Trực tiếp tại Frontend):** Trên giao diện Web khi khởi chạy, click vào biểu tượng **Cài đặt** (Bánh răng) trong khung cửa sổ Chatbot ở góc phải màn hình và dán mã API Key của bạn vào đó. Hệ thống sẽ lưu trữ khóa bảo mật trong `LocalStorage` trình duyệt của bạn.
+> [!NOTE]
+> Bạn không cần tạo bảng hay chèn dữ liệu thủ công. Ở lần chạy đầu tiên, Quarkus Hibernate ORM sẽ tự động đọc cấu trúc class Java để tự động tạo bảng (DDL) và tự động nạp dữ liệu mẫu (sản phẩm, tài khoản mẫu) từ các tệp tin `import.sql` nằm trong thư mục tài nguyên của dịch vụ.
+
+#### Thay đổi cấu hình MySQL (Nếu cần thiết):
+Mật khẩu MySQL mặc định trong dự án được thiết lập là `Quyen@2005` với tài khoản `root`. Nếu cấu hình MySQL của bạn khác, hãy truy cập các tệp tin cấu hình dưới đây và thay đổi các thuộc tính `quarkus.datasource.password` và `quarkus.datasource.username`:
+* [`auth-service/application.properties`](file:///c:/Users/ACER_PC/OneDrive/Desktop/1%20S%E1%BB%91%20CNPTPM/CNPTPM/backend/auth-service/src/main/resources/application.properties)
+* [`product-service/application.properties`](file:///c:/Users/ACER_PC/OneDrive/Desktop/1%20S%E1%BB%91%20CNPTPM/CNPTPM/backend/product-service/src/main/resources/application.properties)
+* [`order-service/application.properties`](file:///c:/Users/ACER_PC/OneDrive/Desktop/1%20S%E1%BB%91%20CNPTPM/CNPTPM/backend/order-service/src/main/resources/application.properties)
+* [`payment-service/application.properties`](file:///c:/Users/ACER_PC/OneDrive/Desktop/1%20S%E1%BB%91%20CNPTPM/CNPTPM/backend/payment-service/src/main/resources/application.properties)
 
 ---
 
-### 4. Biên dịch và Đóng gói Backend (Mandatory Build Step)
-Trước khi khởi chạy hệ thống bằng các script chạy nhanh, bạn cần tiến hành biên dịch các microservice backend thành các tệp tin JAR thực thi.
+### 3. Cấu hình Gemini AI API Key & Cổng Thanh Toán (Tùy chọn)
+
+#### Chatbot AI (Google Gemini):
+Để tính năng Chatbot AI tư vấn thông minh hoạt động tốt nhất, bạn cần chuẩn bị Google Gemini API Key. Bạn có hai cách cấu hình:
+* **Cách 1 (Qua biến môi trường):** Thiết lập biến môi trường trên máy tính hoặc IDE với tên là `GEMINI_API_KEY`.
+* **Cách 2 (Trực tiếp trên Web):** Trên giao diện Web khi khởi chạy, click vào biểu tượng **Cài đặt** (Bánh răng) trong khung cửa sổ Chatbot ở góc phải màn hình và dán mã API Key của bạn vào đó. Hệ thống sẽ lưu trữ khóa bảo mật trong `LocalStorage` trình duyệt của bạn.
+
+#### Cổng thanh toán VNPay Sandbox:
+Cấu hình VNPay Sandbox đã được tích hợp sẵn tại [`order-service`](file:///c:/Users/ACER_PC/OneDrive/Desktop/1%20S%E1%BB%91%20CNPTPM/CNPTPM/backend/order-service/src/main/resources/application.properties) và [`payment-service`](file:///c:/Users/ACER_PC/OneDrive/Desktop/1%20S%E1%BB%91%20CNPTPM/CNPTPM/backend/payment-service/src/main/resources/application.properties). Bạn có thể cấu hình lại các khoá `vnpay.tmn-code` và `vnpay.hash-secret` theo tài khoản Sandbox cá nhân nếu muốn kiểm thử dòng tiền riêng.
+
+---
+
+### 4. Biên dịch và Đóng gói Backend (Bắt buộc trước lần chạy đầu tiên)
+Trước khi khởi chạy hệ thống ở chế độ Packaged JAR, bạn cần tiến hành biên dịch các microservice backend thành các tệp tin JAR thực thi.
 
 Mở terminal tại thư mục `backend/` và chạy lệnh sau:
 ```bash
@@ -161,13 +176,13 @@ Lệnh này sẽ quét toàn bộ dự án cha, đóng gói các module con và 
 
 ### 5. Khởi chạy toàn bộ hệ thống (Execution)
 
-#### Cách 1: Sử dụng Batch script (Tiện lợi nhất trên Windows)
+#### Cách 1: Sử dụng Batch script (Tiện lợi nhất - Click là Chạy)
 1. Di chuyển về thư mục gốc của dự án (`CNPTPM/`).
 2. Double-click vào tệp tin **`start.bat`**. 
-3. Script sẽ tự động gọi PowerShell, nạp thiết lập mã hóa UTF-8 tiếng Việt, mở các tab terminal riêng biệt và chạy đồng loạt 6 dịch vụ Backend Quarkus cùng Frontend ReactJS.
+3. Script sẽ tự động gọi PowerShell, nạp thiết lập mã hóa UTF-8 tiếng Việt, mở các tab terminal riêng biệt và khởi chạy đồng loạt 6 dịch vụ Backend Quarkus cùng Frontend ReactJS chỉ trong một cú nhấp chuột.
 
-#### Cách 2: Khởi chạy thủ công chế độ lập trình (Development Mode)
-Nếu bạn muốn sửa đổi mã nguồn (Hot Reload) và theo dõi log chi tiết trong quá trình phát triển dự án, hãy chạy thủ công bằng các bước sau:
+#### Cách 2: Khởi chạy thủ công chế độ lập trình (Development Mode - Hỗ trợ Hot Reload)
+Nếu bạn muốn sửa đổi mã nguồn và theo dõi log chi tiết trong quá trình phát triển dự án, hãy chạy thủ công bằng các bước sau:
 
 * **Khởi chạy các Backend Microservices (Mở các terminal riêng lẻ trong thư mục `backend/`):**
   ```bash
@@ -210,6 +225,20 @@ Hệ thống đã nạp sẵn các tài khoản thử nghiệm sau đây để b
 | :--- | :--- | :--- | :--- |
 | **Quản trị viên (Admin)** | `admin` hoặc `admin@gmail.com` | `123456` | Đăng nhập trang Admin quản lý kho, sản phẩm, doanh thu |
 | **Khách hàng (User)** | `nguyenvana` | `123456` | Mua sắm, thanh toán đơn hàng, chat tư vấn AI |
+
+---
+
+## ⚠️ Giải quyết Sự cố Thường gặp (Troubleshooting)
+
+1. **Lỗi kết nối cơ sở dữ liệu (Database Connection Refused):**
+   * Đảm bảo MySQL Server đang hoạt động tốt trên cổng `3306`.
+   * Hãy kiểm tra xem mật khẩu MySQL của bạn có khớp với `Quyen@2005` không. Nếu không, vui lòng cập nhật lại mật khẩu trong `application.properties` của cả 4 services đã nêu ở **Mục 2**.
+2. **Không tìm thấy file JAR (`quarkus-run.jar` not found):**
+   * Trước khi click `start.bat`, hãy chắc chắn bạn đã chạy lệnh biên dịch `mvn clean package -DskipTests` trong thư mục `backend/`.
+3. **Lỗi Xung đột cổng (Port Conflict):**
+   * Nếu có một dịch vụ không thể khởi chạy do trùng cổng, hãy kiểm tra các tiến trình đang chạy ẩn trên cổng đó bằng lệnh `netstat -ano | findstr <port>` và kill tiến trình đó, hoặc đổi cấu hình `quarkus.http.port` trong file `application.properties` của service tương ứng.
+4. **Chatbot AI không hoạt động:**
+   * Hệ thống sẽ tự động chuyển sang chế độ gợi ý nội bộ offline. Nếu muốn chatbot hoạt động bằng trí tuệ nhân tạo, hãy dán API Key Gemini của bạn tại biểu tượng cài đặt bánh răng trên giao diện chat ở góc màn hình.
 
 ---
 Chúc bạn báo cáo dự án thành công rực rỡ và phát triển dự án thêm nhiều tính năng đột phá! 🎉
