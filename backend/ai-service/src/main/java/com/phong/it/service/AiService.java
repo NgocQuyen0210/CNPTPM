@@ -263,12 +263,20 @@ public class AiService {
 
         String lowerMsg = userMessage.toLowerCase().trim();
 
+        // Out of scope check: fashion / clothes / shoes
+        if (lowerMsg.contains("quần") || lowerMsg.contains("áo") || lowerMsg.contains("váy") || lowerMsg.contains("đầm") || lowerMsg.contains("thời trang") || lowerMsg.contains("giày") || lowerMsg.contains("dép")) {
+            return new AiConsultResponse(
+                    "Dạ, hiện tại shop chỉ chuyên kinh doanh các sản phẩm Đồ Điện Tử (Điện thoại, Laptop, Máy tính bảng, Smartwatch) và Phụ kiện công nghệ chính hãng thôi ạ. Rất mong quý khách thông cảm! 💻📱",
+                    Collections.emptyList()
+            );
+        }
+
         // 1. FAQ / General Conversation Handling
         // Greeting / Welcome
         if (lowerMsg.matches(".*(xin chào|hello|hi|chào shop|chào bạn|chào ad|tư vấn).*") || lowerMsg.equals("chào") || lowerMsg.equals("hi") || lowerMsg.equals("hello")) {
             if (!lowerMsg.contains("điện thoại") && !lowerMsg.contains("laptop") && !lowerMsg.contains("tai nghe") && 
                 !lowerMsg.contains("đồng hồ") && !lowerMsg.contains("phụ kiện") && !lowerMsg.contains("máy tính") &&
-                !lowerMsg.contains("ipad") && !lowerMsg.contains("tab") && !lowerMsg.contains("quần") && !lowerMsg.contains("áo")) {
+                !lowerMsg.contains("ipad") && !lowerMsg.contains("tab")) {
                 return new AiConsultResponse(
                         "Dạ, shop xin kính chào quý khách! 👋 Shop chuyên cung cấp Đồ Điện Tử & Phụ Kiện Công Nghệ chính hãng. Shop có thể giúp gì cho bạn hôm nay ạ?",
                         Collections.emptyList()
@@ -431,8 +439,6 @@ public class AiService {
             requestedCategory = "đồng hồ";
         } else if (lowerMsg.contains("tai nghe") || lowerMsg.contains("phụ kiện") || lowerMsg.contains("sạc") || lowerMsg.contains("cáp") || lowerMsg.contains("chuột") || lowerMsg.contains("bàn phím")) {
             requestedCategory = "phụ kiện";
-        } else if (lowerMsg.contains("áo") || lowerMsg.contains("quần") || lowerMsg.contains("váy") || lowerMsg.contains("đầm") || lowerMsg.contains("thời trang")) {
-            requestedCategory = "thời trang";
         }
 
         // Category keywords mapping (legacy fallback)
@@ -590,8 +596,6 @@ public class AiService {
             adviceText = "Dạ, shop gửi bạn các mẫu đồng hồ thông minh theo dõi sức khỏe và hỗ trợ tập luyện thể thao bán chạy nhất:\n";
         } else if ("phụ kiện".equals(requestedCategory)) {
             adviceText = "Dạ, shop có sẵn các loại phụ kiện cao cấp như tai nghe chống ồn, chuột, bàn phím cơ, sạc cáp chính hãng sau:\n";
-        } else if ("thời trang".equals(requestedCategory)) {
-            adviceText = "Dạ, đây là những mẫu quần áo, váy đầm thời trang nam nữ chất liệu cao cấp và kiểu dáng hot trend gửi bạn:\n";
         } else if (lowerMsg.contains("game") || lowerMsg.contains("gaming")) {
             adviceText = "Dành cho nhu cầu chơi game & giải trí hiệu năng cao, đây là những sản phẩm có cấu hình cực tốt trong tầm giá:\n";
         } else if (lowerMsg.contains("văn phòng") || lowerMsg.contains("học tập") || lowerMsg.contains("mỏng nhẹ")) {
