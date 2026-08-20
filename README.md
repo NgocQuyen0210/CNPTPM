@@ -1,6 +1,6 @@
-# 🛍️ Hệ thống E-Commerce Microservices & AI Chatbot tư vấn mua sắm
+# 🛍️ Nền tảng E-Commerce Microservices & AI Chatbot Tư vấn mua sắm
 
-Dự án này là một nền tảng thương mại điện tử phân tán (Microservices Architecture) được xây dựng bằng **Java Quarkus** ở phía Backend và **ReactJS (Vite)** ở phía Frontend, tích hợp **AI Chatbot** tư vấn bán hàng thời gian thực. Dự án được gộp chung mã nguồn vào một Repository để dễ dàng triển khai và quản lý.
+Nền tảng thương mại điện tử phân tán (Microservices Architecture) được phát triển bằng **Java Quarkus** cho Backend và **ReactJS (Vite)** cho Frontend, tích hợp **AI Chatbot** tư vấn bán hàng thông minh. Dự án được tích hợp toàn bộ nghiệp vụ quản lý bán hàng, đặt hàng, quản lý kho, thanh toán, và quản trị admin trong một kiến trúc microservices khép kín.
 
 ---
 
@@ -20,6 +20,59 @@ Dự án này là một nền tảng thương mại điện tử phân tán (Mic
 
 ### Cơ sở dữ liệu
 * **Database:** MySQL Server 8.0+ (Chạy trên cổng mặc định `3306`)
+
+---
+
+## 🌟 Danh sách Chức năng hệ thống (System Features)
+
+### 👤 1. Phân hệ dành cho Khách hàng (User Dashboard)
+* **Trang chủ & Menu sản phẩm:**
+  * Bộ lọc sản phẩm theo Danh mục và Thương hiệu.
+  * Ô tìm kiếm thông minh tích hợp **Gợi ý tự động (Autocomplete Search Suggestions)** khi nhập ký tự.
+  * Hiển thị danh sách sản phẩm nổi bật cùng huy hiệu trạng thái kho hàng.
+* **Chi tiết sản phẩm:**
+  * Xem mô tả chi tiết, hình ảnh sản phẩm.
+  * Chọn lựa linh hoạt các cấu hình biến thể (RAM, SSD, Màu sắc, Dung lượng, Kích cỡ...).
+  * Tự động kiểm tra số lượng tồn kho của cấu hình đã chọn.
+  * Tính năng **Đặt hàng trước (Pre-order)** nếu biến thể sản phẩm tạm thời hết hàng trong kho.
+* **Quản lý Giỏ hàng (Cart):**
+  * Thêm sản phẩm nhanh hoặc thêm từ trang chi tiết kèm theo biến thể đã chọn.
+  * Cập nhật tăng/giảm số lượng trực tiếp trong giỏ hàng hoặc xóa sản phẩm.
+  * Áp dụng mã giảm giá (Coupon) để chiết khấu trực tiếp vào tổng tiền.
+* **Thanh toán đơn hàng (Checkout):**
+  * Chọn địa chỉ nhận hàng đã lưu hoặc thêm địa chỉ giao hàng mới.
+  * Hỗ trợ nhiều phương thức thanh toán: COD (Thanh toán khi nhận hàng), Chuyển khoản ngân hàng kèm **mã QR Payment tự động**, hoặc thanh toán điện tử.
+  * Kiểm tra chặt chẽ số lượng tồn kho thời gian thực tại thời điểm đặt hàng.
+* **Lịch sử mua hàng (Order History):**
+  * Xem danh sách các đơn hàng đã đặt kèm trạng thái chi tiết.
+  * Theo dõi quy trình trạng thái đơn hàng: *PENDING (Chờ xử lý)* $\rightarrow$ *PROCESSING (Đang chuẩn bị)* $\rightarrow$ *SHIPPED (Đang giao)* $\rightarrow$ *DELIVERED (Đã giao)* $\rightarrow$ *COMPLETED (Hoàn thành)*.
+* **Danh sách yêu thích (Wishlist):**
+  * Lưu trữ các sản phẩm yêu thích cá nhân để dễ dàng mua lại sau này.
+* **Quản lý thông tin cá nhân (Profile):**
+  * Cập nhật trực tiếp **Họ tên**, **Email** và **Mật khẩu mới** xuống cơ sở dữ liệu MySQL.
+  * Tự động đồng bộ và thay đổi tên chào mừng trên thanh Header ngay lập tức (không cần tải lại trang).
+* **AI Chatbot tư vấn thông minh:**
+  * Cửa sổ chat tư vấn nằm ở góc màn hình kết nối trực tiếp với **Gemini AI API**.
+  * Tư vấn sản phẩm phù hợp dựa trên mô tả nhu cầu của khách hàng (Ví dụ: *"Tôi muốn mua laptop chơi game tầm 30 triệu"*).
+
+---
+
+### 🔑 2. Phân hệ dành cho Quản trị viên (Admin Portal)
+* **Bảng điều khiển thống kê (Dashboard):**
+  * Biểu đồ doanh thu trực quan, thống kê số lượng Đơn hàng, Sản phẩm, Khách hàng.
+  * Danh sách hiển thị các đơn hàng mới nhất cần phê duyệt trạng thái.
+* **Quản lý Danh mục (Category CRUD):**
+  * Tạo mới danh mục, tự động tạo slug chuẩn SEO.
+  * Chỉnh sửa thông tin hoặc xóa danh mục.
+* **Quản lý Sản phẩm (Product CRUD):**
+  * Thêm mới sản phẩm kèm các thông tin cơ bản: Thương hiệu, giá gốc, ảnh đại diện, danh mục, nhà cung cấp.
+  * **Thiết lập mặc định tồn kho:** Tự động tạo cấu hình biến thể mặc định với số lượng tồn kho ban đầu (mặc định sẵn là `100` sản phẩm) giúp tối ưu hóa luồng tạo sản phẩm.
+  * Hiển thị chi tiết số lượng của tất cả cấu hình sản phẩm trực tiếp ngoài danh sách.
+* **Quản lý Biến thể (Variant Management):**
+  * Thêm mới, chỉnh sửa giá, mã SKU và số lượng hàng tồn kho cho từng cấu hình biến thể cụ thể của sản phẩm.
+* **Quản lý Người dùng (User Management):**
+  * Xem danh sách tất cả các tài khoản đăng ký trong hệ thống.
+  * Phân quyền linh hoạt cho tài khoản người dùng (`USER`, `ADMIN`).
 
 ---
 
@@ -71,8 +124,6 @@ CREATE DATABASE payment_db;
 
 ## 🚀 Hướng dẫn khởi chạy dự án nhanh
 
-Để thuận tiện, hệ thống đã đi kèm các tệp lệnh khởi động hàng loạt các dịch vụ mà không cần chạy thủ công từng cái.
-
 ### Cách 1: Sử dụng Batch file (Nhanh nhất)
 1. Truy cập thư mục gốc của dự án.
 2. Double-click vào tệp tin **`start.bat`**. 
@@ -87,8 +138,6 @@ Mở PowerShell tại thư mục gốc của dự án và chạy:
 ---
 
 ## 📍 Bản đồ Cổng Dịch vụ (Ports Map)
-
-Hệ thống hoạt động đồng bộ thông qua các cổng giao thức sau:
 
 | Dịch vụ | Cổng | URL truy cập |
 | :--- | :--- | :--- |
@@ -105,8 +154,6 @@ Hệ thống hoạt động đồng bộ thông qua các cổng giao thức sau:
 
 ## 👤 Tài khoản thử nghiệm mặc định
 
-Dự án đi kèm dữ liệu tài khoản mẫu được kích hoạt sẵn để chạy thử:
-
 * **Tài khoản quản trị viên (Admin):**
   * **Tên đăng nhập:** `admin` (hoặc `admin@gmail.com`)
   * **Mật khẩu:** `123456`
@@ -116,19 +163,10 @@ Dự án đi kèm dữ liệu tài khoản mẫu được kích hoạt sẵn đ�
 
 ---
 
-## 🌟 Các chức năng đặc trưng & Nghiệp vụ cốt lõi
-
-### 1. Trừ kho thông minh khi Giao hàng thành công
-* Hệ thống sẽ kiểm tra tồn kho tại trang Checkout để đảm bảo đủ số lượng trước khi cho phép tạo đơn.
-* Số lượng hàng sẽ **chưa bị trừ** ngay khi đặt hàng, mà chỉ được thực hiện khi đơn hàng chuyển sang trạng thái **`DELIVERED`** hoặc **`COMPLETED`** (Đã giao hàng thành công).
-* Trường hợp đơn hàng chuyển sang **`RETURNED`** (Hoàn trả/Trả hàng), kho hàng của biến thể sản phẩm đó sẽ tự động được hoàn lại số lượng tương ứng.
-
-### 2. Thiết lập mặc định tồn kho
-* Khi tạo mới sản phẩm phía Admin, hệ thống tự động sinh cấu hình biến thể mặc định với số lượng tồn kho khởi tạo mặc định là **100 sản phẩm** (được hiển thị trực quan trong cột Số lượng kho ở danh sách sản phẩm).
-
-### 3. Thiết lập thông tin cá nhân khách hàng
-* Khách hàng có thể truy cập trang cài đặt tài khoản cá nhân tại đường dẫn `/dashboard/profile` (click vào tên chào mừng góc phải).
-* Thông tin chỉnh sửa được lưu trực tiếp xuống MySQL và phát tín hiệu đồng bộ để thanh Header cập nhật trực tiếp tên mới tức thì mà không cần load lại trang.
+## ⚙️ Luồng nghiệp vụ kho hàng nâng cao (Stock Business Logic)
+* **Kiểm tra kho lúc Checkout:** Khi khách hàng tiến hành thanh toán, hệ thống sẽ gọi chéo REST Client sang `product-service` để kiểm tra tồn kho tức thời. Nếu vượt quá tồn kho, hệ thống sẽ ngăn chặn việc tạo đơn hàng và hiển thị chính xác tên sản phẩm bị thiếu hàng.
+* **Thời điểm trừ tồn kho:** Thay vì trừ hàng ngay khi đặt đơn, hệ thống chỉ kích hoạt trừ số lượng tồn kho khi Admin phê duyệt trạng thái đơn hàng sang **`DELIVERED`** hoặc **`COMPLETED`** (Đã giao hàng thành công).
+* **Hoàn trả kho hàng:** Nếu đơn hàng sau khi giao thành công bị khách hàng đổi trả hoặc hoàn hàng (**`RETURNED`**), hệ thống tự động sinh phiếu điều chuyển kho dạng `RETURN` để cộng hoàn lại số lượng sản phẩm vào kho.
 
 ---
- chúc bạn có buổi báo cáo và phát triển dự án thành công tốt đẹp! 🎉
+Chúc bạn có buổi báo cáo và phát triển dự án thành công tốt đẹp! 🎉
