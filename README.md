@@ -129,13 +129,10 @@ Hãy chắc chắn máy tính của bạn đã được cài đặt:
 * **MySQL Server 8.0+** đang chạy trên cổng mặc định `3306`.
 
 ### 2. Thiết lập Cơ sở dữ liệu (Database Setup)
-Khởi chạy MySQL client (MySQL Workbench, DBeaver, phpMyAdmin,...) và chạy câu lệnh SQL sau để tạo 4 cơ sở dữ liệu trống:
-```sql
-CREATE DATABASE auth_db;
-CREATE DATABASE product_db;
-CREATE DATABASE order_db;
-CREATE DATABASE payment_db;
-```
+> [!TIP]
+> **Tự động tạo cơ sở dữ liệu:** Các tệp tin cấu hình đã được thêm tham số `createDatabaseIfNotExist=true`. Do đó, bạn **không cần tạo thủ công cơ sở dữ liệu trống** trên MySQL! Khi chạy ứng dụng, hệ thống sẽ tự động tạo `auth_db`, `product_db`, `order_db` và `payment_db` nếu chúng chưa tồn tại.
+
+Bạn chỉ cần khởi chạy MySQL Server trên cổng mặc định `3306`.
 
 > [!NOTE]
 > Bạn không cần tạo bảng hay chèn dữ liệu thủ công. Ở lần chạy đầu tiên, Quarkus Hibernate ORM sẽ tự động đọc cấu trúc class Java để tự động tạo bảng (DDL) và tự động nạp dữ liệu mẫu (sản phẩm, tài khoản mẫu) từ các tệp tin `import.sql` nằm trong thư mục tài nguyên của dịch vụ.
@@ -161,25 +158,26 @@ Cấu hình VNPay Sandbox đã được tích hợp sẵn tại [`order-service`
 
 ---
 
-### 4. Biên dịch và Đóng gói Backend (Bắt buộc trước lần chạy đầu tiên)
-Trước khi khởi chạy hệ thống ở chế độ Packaged JAR, bạn cần tiến hành biên dịch các microservice backend thành các tệp tin JAR thực thi.
+### 4. Khởi chạy toàn bộ hệ thống (Execution)
 
-Mở terminal tại thư mục `backend/` và chạy lệnh sau:
-```bash
-mvn clean package -DskipTests
-```
-*(Hoặc dùng Maven Wrapper đi kèm dự án nếu máy tính của bạn chưa cấu hình Maven toàn cục: `.\mvnw clean package -DskipTests`)*
-
-Lệnh này sẽ quét toàn bộ dự án cha, đóng gói các module con và tạo ra các thư mục `target/quarkus-app/` chứa file `quarkus-run.jar` chạy trực tiếp.
-
----
-
-### 5. Khởi chạy toàn bộ hệ thống (Execution)
-
-#### Cách 1: Sử dụng Batch script (Tiện lợi nhất - Click là Chạy)
+#### Cách 1: Sử dụng Batch script (Khuyên dùng - Auto Build & Run)
+Đây là cách nhanh nhất và tiện lợi nhất. Bạn không cần tự biên dịch hay cài đặt thư viện thủ công.
 1. Di chuyển về thư mục gốc của dự án (`CNPTPM/`).
 2. Double-click vào tệp tin **`start.bat`**. 
-3. Script sẽ tự động gọi PowerShell, nạp thiết lập mã hóa UTF-8 tiếng Việt, mở các tab terminal riêng biệt và khởi chạy đồng loạt 6 dịch vụ Backend Quarkus cùng Frontend ReactJS chỉ trong một cú nhấp chuột.
+3. **Cơ chế tự động thông minh:**
+   - **Lần chạy đầu tiên:** Script phát hiện chưa có thư viện frontend và file JAR backend, nó sẽ tự động chạy `npm install` cho Frontend và biên dịch đóng gói backend (`mvn clean package -DskipTests`).
+   - **Các lần chạy sau:** Script phát hiện các file build đã tồn tại, ứng dụng sẽ khởi động ngay lập tức trong vòng vài giây mà không cần build lại.
+   - Script tự động mở các cửa sổ PowerShell riêng biệt để chạy đồng loạt 6 dịch vụ Backend Quarkus cùng Frontend ReactJS.
+
+#### Cách 2: Biên dịch và Khởi chạy thủ công (Chế độ đóng gói JAR)
+Nếu muốn tự chạy thủ công các bước đóng gói:
+1. Mở terminal tại thư mục `backend/` và chạy lệnh:
+   ```bash
+   mvn clean package -DskipTests
+   ```
+2. Cài đặt thư viện Frontend:
+   Mở terminal tại thư mục `frontend/` và chạy `npm install`.
+3. Chạy các file JAR đã đóng gói trong từng thư mục target tương ứng (hoặc click `start.bat` để chạy nhanh sau khi đã build).
 
 #### Cách 2: Khởi chạy thủ công chế độ lập trình (Development Mode - Hỗ trợ Hot Reload)
 Nếu bạn muốn sửa đổi mã nguồn và theo dõi log chi tiết trong quá trình phát triển dự án, hãy chạy thủ công bằng các bước sau:
