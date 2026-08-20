@@ -4,22 +4,35 @@ Nền tảng thương mại điện tử phân tán (Microservices Architecture)
 
 ---
 
-## 🛠️ Công nghệ sử dụng (Tech Stack)
+## 📐 Mô tả Hệ thống & Kiến trúc (System Description & Architecture)
 
-### Backend (Microservices)
-* **Ngôn ngữ & Framework:** Java 21, Quarkus 3.35.2
-* **ORM & Database Access:** Hibernate ORM Panache, JDBC MySQL Driver
-* **Bảo mật & Xác thực:** SmallRye JWT (JSON Web Tokens), Elytron Security (Bcrypt)
-* **Giao tiếp liên dịch vụ:** MicroProfile REST Client
-* **Quản lý luồng công việc:** Maven Multi-module
+Hệ thống được thiết kế theo mô hình **Kiến trúc Vi dịch vụ (Microservices Architecture)** nhằm giải quyết các giới hạn của kiến trúc nguyên khối (Monolith) về tính mở rộng độc lập, khả năng chịu lỗi và tính độc lập công nghệ giữa các module nghiệp vụ.
 
-### Frontend
-* **Framework:** ReactJS (Vite)
-* **Styling:** Custom CSS Vanilla (Thiết kế theo xu hướng Kính mờ - Glassmorphic hiện đại, tương thích hoàn toàn Responsive)
-* **Icons:** React Icons (FontAwesome)
+```mermaid
+graph TD
+    User([Khách hàng / Admin]) -->|Truy cập HTTP| Frontend[ReactJS Frontend - Port: 5173]
+    Frontend -->|Gọi REST API| Gateway[API Gateway - Port: 9000]
+    
+    Gateway -->|/api/auth| Auth[Auth Service - Port: 9001]
+    Gateway -->|/api/products| Product[Product Service - Port: 9002]
+    Gateway -->|/api/orders| Order[Order Service - Port: 9003]
+    Gateway -->|/api/payments| Payment[Payment Service - Port: 9004]
+    Gateway -->|/api/ai| AI[AI Service - Port: 9005]
 
-### Cơ sở dữ liệu
-* **Database:** MySQL Server 8.0+ (Chạy trên cổng mặc định `3306`)
+    Auth -->|Đọc/Ghi| DB_Auth[(MySQL: auth_db)]
+    Product -->|Đọc/Ghi| DB_Prod[(MySQL: product_db)]
+    Order -->|Đọc/Ghi| DB_Order[(MySQL: order_db)]
+    Payment -->|Đọc/Ghi| DB_Pay[(MySQL: payment_db)]
+    
+    Order -.->|Gọi REST Client| Product
+    AI -.->|Kết nối API| Gemini[Gemini AI Engine]
+```
+
+### 1. Nguyên lý hoạt động của các thành phần chính:
+* **API Gateway (Cổng API):** Đóng vai trò là điểm đầu mối duy nhất nhận tất cả các yêu cầu từ phía Frontend. API Gateway thực hiện điều hướng các yêu cầu (Routing) đến các vi dịch vụ tương ứng ở backend dựa trên tiền tố đường dẫn (ví dụ: `/api/auth` sang `auth-service`, `/api/products` sang `product-service`).
+* **Cơ sở dữ liệu độc lập (Database per Service):** Mỗi Microservice sở hữu một cơ sở dữ liệu riêng độc lập (`auth_db`, `product_db`, `order_db`, `payment_db`). Điều này đảm bảo tính đóng gói dữ liệu, tránh sự phụ thuộc chéo về dữ liệu giữa các dịch vụ và cho phép từng dịch vụ có thể mở rộng cơ sở dữ liệu tùy biến.
+* **Giao tiếp liên dịch vụ (Inter-service Communication):** Các microservice giao tiếp với nhau bằng phương thức gọi đồng bộ qua REST Client (sử dụng Quarkus MicroProfile REST Client). Ví dụ, khi `order-service` cần xác thực tồn kho trước khi đặt hàng, nó sẽ tự động gửi yêu cầu gọi API sang `product-service` để kiểm tra số lượng hiện tại.
+* **Bảo mật phân tán với JWT (Token-based Security):** Khi người dùng đăng nhập thành công tại `auth-service`, hệ thống sẽ trả về một khóa mã hóa **JWT Token** chứa quyền hạn và định danh người dùng. Khi gửi yêu cầu qua API Gateway đến các service khác, token này sẽ được đính kèm ở Header. Mỗi service sẽ tự giải mã và kiểm tra quyền hạn nội bộ thông qua thư viện SmallRye JWT độc lập mà không cần phải truy vấn lại dịch vụ Auth.
 
 ---
 
