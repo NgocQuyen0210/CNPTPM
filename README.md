@@ -1,12 +1,18 @@
 # 🛍️ Nền tảng E-Commerce Microservices & AI Chatbot Tư vấn mua sắm
 
-Nền tảng thương mại điện tử phân tán (Microservices Architecture) được phát triển bằng **Java Quarkus** cho Backend và **ReactJS (Vite)** cho Frontend, tích hợp **AI Chatbot** tư vấn bán hàng thông minh. Dự án được tích hợp toàn bộ nghiệp vụ quản lý bán hàng, đặt hàng, quản lý kho, thanh toán, và quản trị admin trong một kiến trúc microservices khép kín.
+[![Java Quarkus](https://img.shields.io/badge/Backend-Java%20Quarkus%2021-red.svg?logo=quarkus&logoColor=white)](https://quarkus.io/)
+[![React](https://img.shields.io/badge/Frontend-React%2019%20%2B%20Vite%208-blue.svg?logo=react&logoColor=white)](https://react.dev/)
+[![MySQL](https://img.shields.io/badge/Database-MySQL%208.0-orange.svg?logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Gemini](https://img.shields.io/badge/AI%20Engine-Gemini%201.5%20Flash-green.svg?logo=google-gemini&logoColor=white)](https://deepmind.google/technologies/gemini/)
+[![Architecture](https://img.shields.io/badge/Architecture-Microservices-purple.svg)]()
+
+Nền tảng thương mại điện tử phân tán (**Microservices Architecture**) được thiết kế và phát triển với **Java Quarkus** cho Backend và **ReactJS (Vite)** cho Frontend, tích hợp **AI Chatbot tư vấn bán hàng thông minh (Google Gemini)**. Hệ thống giải quyết trọn vẹn các bài toán nghiệp vụ từ quản lý sản phẩm, quản lý kho hàng biến thể, giỏ hàng, đặt hàng, xử lý thanh toán tự động đến quản trị nội bộ.
 
 ---
 
-## 📐 Mô tả Hệ thống & Kiến trúc (System Description & Architecture)
+## 📐 Kiến trúc & Nguyên lý hoạt động (Architecture & Principles)
 
-Hệ thống được thiết kế theo mô hình **Kiến trúc Vi dịch vụ (Microservices Architecture)** nhằm giải quyết các giới hạn của kiến trúc nguyên khối (Monolith) về tính mở rộng độc lập, khả năng chịu lỗi và tính độc lập công nghệ giữa các module nghiệp vụ.
+Hệ thống được thiết kế theo mô hình **Database-per-Service** (Mỗi dịch vụ sở hữu cơ sở dữ liệu riêng độc lập) để đảm bảo tính đóng gói dữ liệu và khả năng mở rộng độc lập.
 
 ```mermaid
 graph TD
@@ -28,64 +34,68 @@ graph TD
     AI -.->|Kết nối API| Gemini[Gemini AI Engine]
 ```
 
-### 1. Nguyên lý hoạt động của các thành phần chính:
-* **API Gateway (Cổng API):** Đóng vai trò là điểm đầu mối duy nhất nhận tất cả các yêu cầu từ phía Frontend. API Gateway thực hiện điều hướng các yêu cầu (Routing) đến các vi dịch vụ tương ứng ở backend dựa trên tiền tố đường dẫn (ví dụ: `/api/auth` sang `auth-service`, `/api/products` sang `product-service`).
-* **Cơ sở dữ liệu độc lập (Database per Service):** Mỗi Microservice sở hữu một cơ sở dữ liệu riêng độc lập (`auth_db`, `product_db`, `order_db`, `payment_db`). Điều này đảm bảo tính đóng gói dữ liệu, tránh sự phụ thuộc chéo về dữ liệu giữa các dịch vụ và cho phép từng dịch vụ có thể mở rộng cơ sở dữ liệu tùy biến.
-* **Giao tiếp liên dịch vụ (Inter-service Communication):** Các microservice giao tiếp với nhau bằng phương thức gọi đồng bộ qua REST Client (sử dụng Quarkus MicroProfile REST Client). Ví dụ, khi `order-service` cần xác thực tồn kho trước khi đặt hàng, nó sẽ tự động gửi yêu cầu gọi API sang `product-service` để kiểm tra số lượng hiện tại.
-* **Bảo mật phân tán với JWT (Token-based Security):** Khi người dùng đăng nhập thành công tại `auth-service`, hệ thống sẽ trả về một khóa mã hóa **JWT Token** chứa quyền hạn và định danh người dùng. Khi gửi yêu cầu qua API Gateway đến các service khác, token này sẽ được đính kèm ở Header. Mỗi service sẽ tự giải mã và kiểm tra quyền hạn nội bộ thông qua thư viện SmallRye JWT độc lập mà không cần phải truy vấn lại dịch vụ Auth.
+### 1. Nguyên lý hoạt động cốt lõi:
+* **API Gateway (Cổng API - Port 9000):** Là điểm đầu mối duy nhất tiếp nhận tất cả các yêu cầu từ phía Client. Gateway thực hiện cơ chế điều hướng (Routing) thông minh đến các vi dịch vụ tương ứng dựa trên tiền tố đường dẫn (ví dụ: `/api/auth/*` điều hướng về `auth-service`, `/api/products/*` về `product-service`).
+* **Giao tiếp liên dịch vụ (Inter-service Communication):** Các vi dịch vụ giao tiếp đồng bộ với nhau thông qua **MicroProfile REST Client** của Quarkus. Điển hình, khi khách hàng tạo đơn hàng, `order-service` sẽ gửi yêu cầu trực tiếp sang `product-service` để kiểm tra và xác thực số lượng tồn kho của từng biến thể sản phẩm.
+* **Bảo mật phân tán với JWT (Stateless JWT Security):** 
+  - Khi người dùng đăng nhập thành công tại `auth-service`, dịch vụ này sẽ cấp một **JWT Token** được ký số bằng thuật toán mã hóa (chứa định danh và quyền hạn của người dùng).
+  - Khi gửi request qua API Gateway đến các service khác, token này được đính kèm vào Header.
+  - Các service độc lập tự giải mã và kiểm tra quyền hạn nội bộ thông qua thư viện **SmallRye JWT** tích hợp sẵn mà không cần phải truy vấn lại dịch vụ Auth, giúp giảm thiểu tối đa độ trễ hệ thống.
 
 ---
 
-## 🌟 Danh sách Chức năng hệ thống (System Features)
+## 🌟 Chức năng nổi bật hệ thống (Key Features)
 
-### 👤 1. Phân hệ dành cho Khách hàng (User Dashboard)
-* **Trang chủ & Menu sản phẩm:**
-  * Bộ lọc sản phẩm theo Danh mục và Thương hiệu.
-  * Ô tìm kiếm thông minh tích hợp **Gợi ý tự động (Autocomplete Search Suggestions)** khi nhập ký tự.
-  * Hiển thị danh sách sản phẩm nổi bật cùng huy hiệu trạng thái kho hàng.
-* **Chi tiết sản phẩm:**
-  * Xem mô tả chi tiết, hình ảnh sản phẩm.
-  * Chọn lựa linh hoạt các cấu hình biến thể (RAM, SSD, Màu sắc, Dung lượng, Kích cỡ...).
-  * Tự động kiểm tra số lượng tồn kho của cấu hình đã chọn.
-  * Tính năng **Đặt hàng trước (Pre-order)** nếu biến thể sản phẩm tạm thời hết hàng trong kho.
-* **Quản lý Giỏ hàng (Cart):**
-  * Thêm sản phẩm nhanh hoặc thêm từ trang chi tiết kèm theo biến thể đã chọn.
-  * Cập nhật tăng/giảm số lượng trực tiếp trong giỏ hàng hoặc xóa sản phẩm.
-  * Áp dụng mã giảm giá (Coupon) để chiết khấu trực tiếp vào tổng tiền.
-* **Thanh toán đơn hàng (Checkout):**
-  * Chọn địa chỉ nhận hàng đã lưu hoặc thêm địa chỉ giao hàng mới.
-  * Hỗ trợ nhiều phương thức thanh toán: COD (Thanh toán khi nhận hàng), Chuyển khoản ngân hàng kèm **mã QR Payment tự động**, hoặc thanh toán điện tử.
-  * Kiểm tra chặt chẽ số lượng tồn kho thời gian thực tại thời điểm đặt hàng.
+### 👤 1. Phân hệ khách hàng (User Storefront)
+* **Trang chủ & Tìm kiếm thông minh:**
+  * Bộ lọc sản phẩm trực quan theo danh mục và thương hiệu.
+  * Ô tìm kiếm tích hợp tính năng **Gợi ý tự động (Autocomplete Search Suggestions)** ngay khi gõ phím.
+* **Chi tiết sản phẩm & Biến thể phong phú:**
+  * Chọn lựa cấu hình biến thể linh hoạt (ví dụ: RAM, SSD, Màu sắc...).
+  * Tự động kiểm tra số lượng tồn kho tương ứng với cấu hình biến thể đã chọn.
+  * Tính năng **Đặt hàng trước (Pre-order)** được kích hoạt tự động nếu biến thể đã hết hàng trong kho.
+* **Giỏ hàng & Thanh toán:**
+  * Cập nhật số lượng, áp dụng mã giảm giá (Coupon).
+  * Quy trình thanh toán (Checkout) tích hợp **Mã QR chuyển khoản tự động** hoặc thanh toán COD tiện lợi.
 * **Lịch sử mua hàng (Order History):**
-  * Xem danh sách các đơn hàng đã đặt kèm trạng thái chi tiết.
-  * Theo dõi quy trình trạng thái đơn hàng: *PENDING (Chờ xử lý)* $\rightarrow$ *PROCESSING (Đang chuẩn bị)* $\rightarrow$ *SHIPPED (Đang giao)* $\rightarrow$ *DELIVERED (Đã giao)* $\rightarrow$ *COMPLETED (Hoàn thành)*.
-* **Danh sách yêu thích (Wishlist):**
-  * Lưu trữ các sản phẩm yêu thích cá nhân để dễ dàng mua lại sau này.
-* **Quản lý thông tin cá nhân (Profile):**
-  * Cập nhật trực tiếp **Họ tên**, **Email** và **Mật khẩu mới** xuống cơ sở dữ liệu MySQL.
-  * Tự động đồng bộ và thay đổi tên chào mừng trên thanh Header ngay lập tức (không cần tải lại trang).
-* **AI Chatbot tư vấn thông minh:**
-  * Cửa sổ chat tư vấn nằm ở góc màn hình kết nối trực tiếp với **Gemini AI API**.
-  * Tư vấn sản phẩm phù hợp dựa trên mô tả nhu cầu của khách hàng (Ví dụ: *"Tôi muốn mua laptop chơi game tầm 30 triệu"*).
+  * Theo dõi chi tiết đơn hàng qua máy trạng thái: `PENDING` $\rightarrow$ `PROCESSING` $\rightarrow$ `SHIPPED` $\rightarrow$ `DELIVERED` $\rightarrow$ `COMPLETED`.
+* **AI Chatbot tư vấn mua sắm 🤖:**
+  * Cửa sổ Chatbot tích hợp trực tiếp ở góc màn hình.
+  * Phân tích nhu cầu tự nhiên của khách hàng (ví dụ: *"Tư vấn cho tôi laptop khoảng 20-25 triệu để lập trình"*), tự động đối chiếu danh mục sản phẩm đang bán để đưa ra khuyến nghị mua sắm chính xác nhất.
+
+### 🔑 2. Phân hệ quản trị (Admin Portal)
+* **Bảng điều khiển (Dashboard):** Thống kê tổng doanh thu, số lượng đơn hàng, khách hàng mới và danh sách đơn hàng mới cần phê duyệt.
+* **Quản lý Danh mục & Sản phẩm (CRUD):**
+  * Tạo mới danh mục, tự động sinh slug phục vụ SEO.
+  * Thêm mới sản phẩm nhanh chóng. Hệ thống hỗ trợ **Thiết lập mặc định tồn kho (Auto-stock)**, tự động khởi tạo cấu hình biến thể cơ bản với số lượng mặc định là `100` sản phẩm giúp tối ưu hóa thời gian đăng tải sản phẩm.
+* **Quản lý chi tiết Biến thể (Variants):** Thiết lập giá bán lẻ, mã SKU và quản lý số lượng tồn kho riêng cho từng biến thể (RAM, SSD, màu sắc...).
+* **Quản lý người dùng:** Xem danh sách thành viên và phân quyền vai trò (`USER`, `ADMIN`).
+
+### ⚙️ 3. Luồng Nghiệp vụ Kho hàng Nâng cao (Stock Business Logic)
+* **Kiểm tra kho thời gian thực:** Khi tiến hành Checkout, hệ thống kiểm tra tồn kho chéo qua REST Client. Nếu thiếu hàng, giao dịch bị chặn ngay lập tức kèm thông báo cụ thể mặt hàng bị thiếu.
+* **Thời điểm trừ tồn kho:** Tồn kho **chỉ thực sự bị trừ** khi trạng thái đơn hàng được chuyển sang **`DELIVERED`** (Đang giao hàng) hoặc **`COMPLETED`** (Đã giao hàng thành công).
+* **Hoàn trả kho tự động:** Khi đơn hàng bị hoàn/hủy hoặc khách trả hàng (trạng thái chuyển sang **`RETURNED`**), hệ thống tự động sinh phiếu điều chuyển kho dạng `RETURN` để cộng trả lại số lượng sản phẩm vào kho hàng tương ứng.
 
 ---
 
-### 🔑 2. Phân hệ dành cho Quản trị viên (Admin Portal)
-* **Bảng điều khiển thống kê (Dashboard):**
-  * Biểu đồ doanh thu trực quan, thống kê số lượng Đơn hàng, Sản phẩm, Khách hàng.
-  * Danh sách hiển thị các đơn hàng mới nhất cần phê duyệt trạng thái.
-* **Quản lý Danh mục (Category CRUD):**
-  * Tạo mới danh mục, tự động tạo slug chuẩn SEO.
-  * Chỉnh sửa thông tin hoặc xóa danh mục.
-* **Quản lý Sản phẩm (Product CRUD):**
-  * Thêm mới sản phẩm kèm các thông tin cơ bản: Thương hiệu, giá gốc, ảnh đại diện, danh mục, nhà cung cấp.
-  * **Thiết lập mặc định tồn kho:** Tự động tạo cấu hình biến thể mặc định với số lượng tồn kho ban đầu (mặc định sẵn là `100` sản phẩm) giúp tối ưu hóa luồng tạo sản phẩm.
-  * Hiển thị chi tiết số lượng của tất cả cấu hình sản phẩm trực tiếp ngoài danh sách.
-* **Quản lý Biến thể (Variant Management):**
-  * Thêm mới, chỉnh sửa giá, mã SKU và số lượng hàng tồn kho cho từng cấu hình biến thể cụ thể của sản phẩm.
-* **Quản lý Người dùng (User Management):**
-  * Xem danh sách tất cả các tài khoản đăng ký trong hệ thống.
-  * Phân quyền linh hoạt cho tài khoản người dùng (`USER`, `ADMIN`).
+## 💻 Công nghệ cốt lõi (Tech Stack)
+
+### Backend (Microservices)
+* **Java 21** - Ngôn ngữ lập trình mạnh mẽ, tối ưu hiệu năng.
+* **Quarkus Framework** - Supersonic Subatomic Java, tối ưu hóa bộ nhớ RAM cực kỳ hiệu quả (chỉ sử dụng từ 32MB - 192MB mỗi service khi khởi động).
+* **Hibernate ORM với Panache** - Giúp tương tác với DB nhanh chóng theo Pattern Active Record hoặc Repository.
+* **SmallRye JWT** - Xử lý xác thực Token JWT phân tán.
+* **Quarkus Rest Client** - Giao tiếp đồng bộ liên dịch vụ hiệu năng cao.
+
+### Frontend
+* **React 19 & Vite 8** - Cho tốc độ build và khởi động ứng dụng cực kỳ nhanh chóng.
+* **React Router DOM v7** - Quản lý định tuyến trang đơn ứng dụng (SPA).
+* **Axios** - Thư viện giao tiếp API không đồng bộ.
+* **React Icons & Vanilla CSS** - Giao diện tự thiết kế tùy biến, nhẹ nhàng và mượt mà.
+
+### AI Engine & Fallback Mechanism
+* Tích hợp **Google Gemini 1.5 Flash API** để xử lý ngôn ngữ tự nhiên và tư vấn sản phẩm.
+* **Cơ chế dự phòng (Fallback):** Nếu người dùng không cấu hình API Key hoặc kết nối tới Google Gemini gặp sự cố, hệ thống sẽ tự động chuyển sang **Thuật toán Khuyến nghị Nội bộ bằng Java** (quét tìm từ khóa trong cơ sở dữ liệu sản phẩm để gợi ý tương ứng), đảm bảo dịch vụ chatbot luôn hoạt động liên tục không gián đoạn.
 
 ---
 
@@ -93,93 +103,113 @@ graph TD
 
 ```text
 CNPTPM/
-├── backend/                  # Mã nguồn các dịch vụ Backend
-│   ├── common-module/        # Chứa DTO, Entity và Exception dùng chung cho các service
-│   ├── api-gateway/          # Cổng giao tiếp chung (Port: 9000) điều hướng API
-│   ├── auth-service/         # Quản lý người dùng, phân quyền, token (Port: 9001)
-│   ├── product-service/      # Quản lý sản phẩm, danh mục, kho hàng (Port: 9002)
-│   ├── order-service/        # Xử lý giỏ hàng, đơn hàng, trạng thái (Port: 9003)
-│   ├── payment-service/      # Quản lý giao dịch, thanh toán qua VNPay/mã QR (Port: 9004)
-│   └── ai-service/           # Dịch vụ tích hợp AI tư vấn bán hàng (Port: 9005)
-├── frontend/                 # Mã nguồn giao diện người dùng (Port: 5173)
-├── start-all.ps1             # Script khởi động toàn bộ dự án nhanh trên Windows (PowerShell)
-├── start.bat                 # Script chạy nhanh dự án bằng Double-click (Batch file)
+├── backend/                  # Mã nguồn toàn bộ dịch vụ Backend (Quarkus Maven Project)
+│   ├── pom.xml               # File cấu hình Maven cha quản lý các module con
+│   ├── common-module/        # Chứa DTO, Entity, Exception và ExceptionMapper dùng chung
+│   ├── api-gateway/          # Cổng API duy nhất điều phối request (Port: 9000)
+│   ├── auth-service/         # Quản lý người dùng, tài khoản và cấp phát JWT (Port: 9001)
+│   ├── product-service/      # Quản lý sản phẩm, danh mục, biến thể và kho hàng (Port: 9002)
+│   ├── order-service/        # Xử lý giỏ hàng, đặt hàng và máy trạng thái đơn hàng (Port: 9003)
+│   ├── payment-service/      # Quản lý thanh toán COD, tạo QR Chuyển khoản (Port: 9004)
+│   └── ai-service/           # Tích hợp Gemini AI và thuật toán gợi ý dự phòng (Port: 9005)
+├── frontend/                 # Mã nguồn giao diện người dùng ReactJS (Vite - Port: 5173)
+├── start-all.ps1             # PowerShell script khởi động toàn bộ dự án nhanh trên Windows
+├── start.bat                 # Tệp batch click chạy nhanh toàn bộ dự án
 └── README.md                 # Tài liệu hướng dẫn dự án
 ```
 
 ---
 
-## 💻 Yêu cầu hệ thống (Prerequisites)
+## 🛠️ Hướng dẫn Thiết lập & Khởi chạy dự án
 
-Trước khi chạy dự án, hãy đảm bảo máy tính của bạn đã được cài đặt sẵn:
-1. **Java Development Kit (JDK):** Phiên bản **21** trở lên.
-2. **Node.js:** Phiên bản **18** trở lên (kèm `npm`).
-3. **MySQL Server 8.0+:** Đang hoạt động trên cổng `3306` với cấu hình tài khoản mặc định:
-   * **Username:** `root`
-   * **Password:** `Quyen@2005`
+### 1. Yêu cầu hệ thống (Prerequisites)
+Hãy chắc chắn máy tính của bạn đã được cài đặt:
+* **Java Development Kit (JDK) 21** trở lên.
+* **Node.js 18** trở lên (bao gồm trình quản lý gói `npm`).
+* **MySQL Server 8.0+** đang chạy trên cổng mặc định `3306`.
 
----
-
-## 💾 Thiết lập Cơ sở dữ liệu
-
-Hãy mở MySQL Workbench (hoặc DBeaver, phpMyAdmin) và tạo trước 4 Database trống sau đây:
+### 2. Thiết lập Cơ sở dữ liệu (Database Setup)
+Khởi chạy MySQL client (MySQL Workbench, DBeaver, phpMyAdmin,...) và chạy câu lệnh SQL sau để tạo 4 cơ sở dữ liệu trống:
 ```sql
 CREATE DATABASE auth_db;
 CREATE DATABASE product_db;
 CREATE DATABASE order_db;
 CREATE DATABASE payment_db;
 ```
+> [!TIP]
+> Bạn không cần tạo bảng hay chèn dữ liệu thủ công. Ở lần chạy đầu tiên, Quarkus Hibernate ORM sẽ tự động đọc cấu trúc class Java để tự động tạo bảng (DDL) và tự động nạp dữ liệu mẫu (sản phẩm, tài khoản mẫu) từ các tệp tin `import.sql` nằm trong các thư mục tài nguyên của dịch vụ.
 
-> [!NOTE]
-> Khi khởi chạy lần đầu tiên, hệ thống sẽ tự động cấu trúc bảng và tải dữ liệu mẫu (sản phẩm, tài khoản mặc định) từ các tệp tin `import.sql` tương ứng vào cơ sở dữ liệu.
+### 3. Cấu hình Gemini AI API Key (Tùy chọn)
+Để tính năng Chatbot AI tư vấn thông minh hoạt động tốt nhất, bạn cần chuẩn bị Google Gemini API Key. Bạn có hai cách cấu hình:
+* **Cách 1 (Khuyên dùng cho Backend):** Thiết lập biến môi trường trên máy tính hoặc IDE với tên là `GEMINI_API_KEY`.
+* **Cách 2 (Trực tiếp tại Frontend):** Trên giao diện Web khi khởi chạy, click vào biểu tượng **Cài đặt** (Bánh răng) trong khung cửa sổ Chatbot ở góc phải màn hình và dán mã API Key của bạn vào đó. Hệ thống sẽ lưu trữ khóa bảo mật trong `LocalStorage` trình duyệt của bạn.
 
 ---
 
-## 🚀 Hướng dẫn khởi chạy dự án nhanh
+### 4. Biên dịch và Đóng gói Backend (Mandatory Build Step)
+Trước khi khởi chạy hệ thống bằng các script chạy nhanh, bạn cần tiến hành biên dịch các microservice backend thành các tệp tin JAR thực thi.
 
-### Cách 1: Sử dụng Batch file (Nhanh nhất)
-1. Truy cập thư mục gốc của dự án.
-2. Double-click vào tệp tin **`start.bat`**. 
-3. Lệnh sẽ tự động mở các cửa sổ PowerShell tương ứng để chạy các dịch vụ Backend và Frontend.
-
-### Cách 2: Sử dụng Script PowerShell
-Mở PowerShell tại thư mục gốc của dự án và chạy:
-```powershell
-./start-all.ps1
+Mở terminal tại thư mục `backend/` và chạy lệnh sau:
+```bash
+mvn clean package -DskipTests
 ```
+*(Hoặc dùng Maven Wrapper đi kèm dự án nếu máy tính của bạn chưa cấu hình Maven toàn cục: `.\mvnw clean package -DskipTests`)*
+
+Lệnh này sẽ quét toàn bộ dự án cha, đóng gói các module con và tạo ra các thư mục `target/quarkus-app/` chứa file `quarkus-run.jar` chạy trực tiếp.
 
 ---
 
-## 📍 Bản đồ Cổng Dịch vụ (Ports Map)
+### 5. Khởi chạy toàn bộ hệ thống (Execution)
 
-| Dịch vụ | Cổng | URL truy cập |
-| :--- | :--- | :--- |
-| **API Gateway** | `9000` | `http://localhost:9000` |
-| **Auth Service** | `9001` | `http://localhost:9001` |
-| **Product Service**| `9002` | `http://localhost:9002` |
-| **Order Service** | `9003` | `http://localhost:9003` |
-| **Payment Service**| `9004` | `http://localhost:9004` |
-| **AI Service** | `9005` | `http://localhost:9005` |
-| **Frontend Web** | `5173` | `http://localhost:5173` |
-| **MySQL Server** | `3306` | `localhost:3306` |
+#### Cách 1: Sử dụng Batch script (Tiện lợi nhất trên Windows)
+1. Di chuyển về thư mục gốc của dự án (`CNPTPM/`).
+2. Double-click vào tệp tin **`start.bat`**. 
+3. Script sẽ tự động gọi PowerShell, nạp thiết lập mã hóa UTF-8 tiếng Việt, mở các tab terminal riêng biệt và chạy đồng loạt 6 dịch vụ Backend Quarkus cùng Frontend ReactJS.
 
----
+#### Cách 2: Khởi chạy thủ công chế độ lập trình (Development Mode)
+Nếu bạn muốn sửa đổi mã nguồn (Hot Reload) và theo dõi log chi tiết trong quá trình phát triển dự án, hãy chạy thủ công bằng các bước sau:
 
-## 👤 Tài khoản thử nghiệm mặc định
-
-* **Tài khoản quản trị viên (Admin):**
-  * **Tên đăng nhập:** `admin` (hoặc `admin@gmail.com`)
-  * **Mật khẩu:** `123456`
-* **Tài khoản khách hàng (User):**
-  * **Tên đăng nhập:** `nguyenvana`
-  * **Mật khẩu:** `123456`
-
----
-
-## ⚙️ Luồng nghiệp vụ kho hàng nâng cao (Stock Business Logic)
-* **Kiểm tra kho lúc Checkout:** Khi khách hàng tiến hành thanh toán, hệ thống sẽ gọi chéo REST Client sang `product-service` để kiểm tra tồn kho tức thời. Nếu vượt quá tồn kho, hệ thống sẽ ngăn chặn việc tạo đơn hàng và hiển thị chính xác tên sản phẩm bị thiếu hàng.
-* **Thời điểm trừ tồn kho:** Thay vì trừ hàng ngay khi đặt đơn, hệ thống chỉ kích hoạt trừ số lượng tồn kho khi Admin phê duyệt trạng thái đơn hàng sang **`DELIVERED`** hoặc **`COMPLETED`** (Đã giao hàng thành công).
-* **Hoàn trả kho hàng:** Nếu đơn hàng sau khi giao thành công bị khách hàng đổi trả hoặc hoàn hàng (**`RETURNED`**), hệ thống tự động sinh phiếu điều chuyển kho dạng `RETURN` để cộng hoàn lại số lượng sản phẩm vào kho.
+* **Khởi chạy các Backend Microservices (Mở các terminal riêng lẻ trong thư mục `backend/`):**
+  ```bash
+  mvn -pl api-gateway quarkus:dev
+  mvn -pl auth-service quarkus:dev
+  mvn -pl product-service quarkus:dev
+  mvn -pl order-service quarkus:dev
+  mvn -pl payment-service quarkus:dev
+  mvn -pl ai-service quarkus:dev
+  ```
+* **Khởi chạy Frontend ReactJS:**
+  Mở terminal tại thư mục `frontend/` và chạy lệnh:
+  ```bash
+  npm install
+  npm run dev
+  ```
 
 ---
-Chúc bạn có buổi báo cáo và phát triển dự án thành công tốt đẹp! 🎉
+
+## 📍 Bản đồ Cổng Dịch vụ & Tài khoản Thử nghiệm
+
+### Bản đồ Cổng Dịch vụ (Ports Map)
+
+| Tên Dịch vụ | Cổng (Port) | Địa chỉ URL chạy mặc định | Mô tả |
+| :--- | :--- | :--- | :--- |
+| **API Gateway** | `9000` | `http://localhost:9000` | Cổng tiếp nhận REST API tập trung |
+| **Auth Service** | `9001` | `http://localhost:9001` | Xác thực, phân quyền và tài khoản |
+| **Product Service**| `9002` | `http://localhost:9002` | Quản lý sản phẩm, biến thể, kho hàng |
+| **Order Service** | `9003` | `http://localhost:9003` | Quản lý giỏ hàng, đơn hàng |
+| **Payment Service**| `9004` | `http://localhost:9004` | Cổng sinh QR chuyển khoản & COD |
+| **AI Service** | `9005` | `http://localhost:9005` | Gemini AI & Thuật toán khuyến nghị |
+| **Frontend Web** | `5173` | `http://localhost:5173` | Giao diện ReactJS (Vite) |
+| **MySQL Server** | `3306` | `localhost:3306` | Hệ quản trị cơ sở dữ liệu |
+
+### Tài khoản Đăng nhập Thử nghiệm
+
+Hệ thống đã nạp sẵn các tài khoản thử nghiệm sau đây để bạn dễ dàng chạy kiểm thử (Demo):
+
+| Quyền hạn | Tên đăng nhập / Email | Mật khẩu | Phạm vi sử dụng |
+| :--- | :--- | :--- | :--- |
+| **Quản trị viên (Admin)** | `admin` hoặc `admin@gmail.com` | `123456` | Đăng nhập trang Admin quản lý kho, sản phẩm, doanh thu |
+| **Khách hàng (User)** | `nguyenvana` | `123456` | Mua sắm, thanh toán đơn hàng, chat tư vấn AI |
+
+---
+Chúc bạn báo cáo dự án thành công rực rỡ và phát triển dự án thêm nhiều tính năng đột phá! 🎉

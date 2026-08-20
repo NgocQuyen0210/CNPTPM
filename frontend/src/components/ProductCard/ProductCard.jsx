@@ -17,7 +17,7 @@ function ProductCard({ id, image, featuredImage, name, price, originalPrice, dis
   const displayImage = image || featuredImage;
 
   const handleFavorite = () => {
-    toggleFavorite({ id, image: displayImage, name, price, originalPrice, discount, sold });
+    toggleFavorite({ id, image: displayImage, name, price, originalPrice, discount, sold, status });
   };
 
   const handleCart = async () => {

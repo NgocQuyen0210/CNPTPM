@@ -181,7 +181,7 @@ function Header() {
           <>
             <div className="user-profile-badge" onClick={() => navigate("/dashboard/profile")} style={{ cursor: "pointer" }} title="Quản lý tài khoản">
               <FaUserCircle className="user-avatar-icon" />
-              <span className="user-greeting">Chào, {user.fullName || user.username}</span>
+              <span className="user-greeting">{user.fullName || user.username}</span>
             </div>
             <button className="btn-logout" onClick={handleLogout}>
               <FaSignOutAlt className="logout-icon" /> Đăng xuất

@@ -211,6 +211,7 @@
 /* Auth Section */
 .header-auth {
   display: flex;
+  align-items: center;
   gap: 12px;
 }
 
@@ -318,15 +319,39 @@
 }
 
 /* User Profile & Logout */
-.user-greeting {
-  color: var(--text-secondary);
-  font-size: 14px;
-  font-weight: 500;
+.user-profile-badge {
   display: flex;
   align-items: center;
-  margin-right: 8px;
-  border-right: 1px solid var(--border-color);
-  padding-right: 14px;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 50px;
+  background: rgba(13, 148, 136, 0.06);
+  border: 1px solid rgba(13, 148, 136, 0.15);
+  transition: all var(--transition-fast);
+}
+
+.user-profile-badge:hover {
+  background: rgba(13, 148, 136, 0.12);
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.1);
+  transform: translateY(-1px);
+}
+
+.user-avatar-icon {
+  font-size: 18px;
+  color: var(--primary);
+  flex-shrink: 0;
+  transition: color var(--transition-fast);
+}
+
+.user-profile-badge:hover .user-avatar-icon {
+  color: var(--secondary);
+}
+
+.user-greeting {
+  color: var(--text-primary);
+  font-size: 13.5px;
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -341,10 +366,14 @@
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .btn-logout:hover {
   background: rgba(239, 68, 68, 0.15);
   border-color: rgba(239, 68, 68, 0.8);
   color: #fff;
-}
+  transform: translateY(-1px);
+}
