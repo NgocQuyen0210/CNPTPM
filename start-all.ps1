@@ -1,4 +1,17 @@
 $env:JAVA_TOOL_OPTIONS="-Dfile.encoding=UTF-8"
+
+$buildChoice = Read-Host "Ban co muon clean package (build lai) backend truoc khi khoi dong khong? [y/N]"
+if ($buildChoice -eq 'y' -or $buildChoice -eq 'Y') {
+    Write-Host "Dang build backend..." -ForegroundColor Yellow
+    Push-Location "$PSScriptRoot\backend"
+    if (Test-Path "mvnw.cmd") {
+        .\mvnw clean package -DskipTests
+    } else {
+        mvn clean package -DskipTests
+    }
+    Pop-Location
+}
+
 Write-Host "Starting E-Commerce Microservices (Packaged JAR Mode) and Frontend..." -ForegroundColor Green
 
 # Start Backend Services
