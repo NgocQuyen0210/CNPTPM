@@ -20,6 +20,10 @@ const orderService = {
 
   getOrderById: (id) => {
     return apiClient.get(`/orders/${id}`, { headers: getAuthHeaders() });
+  },
+
+  updateStatus: (id, status) => {
+    return apiClient.put(`/orders/${id}/status?status=${status}`, {}, { headers: getAuthHeaders() });
   }
 };
 

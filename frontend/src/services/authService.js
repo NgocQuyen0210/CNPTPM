@@ -55,6 +55,7 @@ const authService = {
         id: payload.userId || payload.sub,
         username: payload.upn || "",
         email: payload.email || "",
+        fullName: payload.fullName || "",
         roles: payload.groups || []
       }));
     } catch (e) {

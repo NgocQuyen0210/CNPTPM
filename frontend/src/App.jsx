@@ -19,6 +19,8 @@ import UserManagement from "./pages/Admin/UserManagement";
 import CategoryPage from "./pages/Dashboard/Category/CategoryPage";
 import ProductDetail from "./pages/Dashboard/Product/ProductDetail";
 import Checkout from "./pages/Dashboard/Checkout/Checkout";
+import OrderHistory from "./pages/Dashboard/OrderHistory/OrderHistory";
+import Profile from "./pages/Dashboard/Profile/Profile";
 
 function App() {
   return (
@@ -44,6 +46,8 @@ function App() {
               <Route path="/dashboard/cart" element={<Cart />} />
               <Route path="/dashboard/checkout" element={<Checkout />} />
               <Route path="/dashboard/favorite" element={<Favorite />} />
+              <Route path="/dashboard/orders" element={<OrderHistory />} />
+              <Route path="/dashboard/profile" element={<Profile />} />
 
               {/* Category & Product pages */}
               <Route path="/dashboard/category/:slug" element={<CategoryPage />} />

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { FaSearch, FaShoppingCart, FaHeart } from "react-icons/fa";
+import { FaSearch, FaShoppingCart, FaHeart, FaUserCircle, FaSignOutAlt } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
 import { useFavorite } from "../../context/FavoriteContext";
 import authService from "../../services/authService";
@@ -11,7 +11,15 @@ function Header() {
   const navigate = useNavigate();
   const { totalItems } = useCart();
   const { totalFavorites } = useFavorite();
-  const user = authService.getUser();
+  const [user, setUser] = useState(authService.getUser());
+
+  useEffect(() => {
+    const handleUserUpdate = () => {
+      setUser(authService.getUser());
+    };
+    window.addEventListener("user-updated", handleUserUpdate);
+    return () => window.removeEventListener("user-updated", handleUserUpdate);
+  }, []);
 
   // Search and Autocomplete States
   const [products, setProducts] = useState([]);
@@ -96,6 +104,14 @@ function Header() {
           </li>
           <li>
             <NavLink
+              to="/dashboard/orders"
+              className={({ isActive }) => (isActive ? "active" : "")}
+            >
+              Đơn hàng
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
               to="/dashboard/favorite"
               className={({ isActive }) => (isActive ? "active cart-link" : "cart-link")}
             >
@@ -163,9 +179,12 @@ function Header() {
       <div className="header-auth">
         {user ? (
           <>
-            <span className="user-greeting">Chào, {user.fullName || user.username}</span>
+            <div className="user-profile-badge" onClick={() => navigate("/dashboard/profile")} style={{ cursor: "pointer" }} title="Quản lý tài khoản">
+              <FaUserCircle className="user-avatar-icon" />
+              <span className="user-greeting">Chào, {user.fullName || user.username}</span>
+            </div>
             <button className="btn-logout" onClick={handleLogout}>
-              Đăng xuất
+              <FaSignOutAlt className="logout-icon" /> Đăng xuất
             </button>
           </>
         ) : (

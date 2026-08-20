@@ -12,6 +12,18 @@ import {
   FaExclamationTriangle, FaFilter, FaLayerGroup 
 } from "react-icons/fa";
 
+const convertToSlug = (text) => {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove accents
+    .replace(/[đĐ]/g, "d")
+    .replace(/([^a-z0-9\s-]|_)+/g, "") // Remove special characters
+    .trim()
+    .replace(/\s+/g, "-") // Replace spaces with -
+    .replace(/-+/g, "-"); // Collapse multiple dashes
+};
+
 function ProductManagement() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -33,7 +45,8 @@ function ProductManagement() {
 
   // Product Form state
   const [form, setForm] = useState({
-    name: "", slug: "", summary: "", content: "", brand: "", price: "", featuredImage: "", categoryId: "", supplierId: ""
+    name: "", slug: "", summary: "", content: "", brand: "", price: "", featuredImage: "", categoryId: "", supplierId: "",
+    stockQuantity: "100"
   });
   const [editingId, setEditingId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,7 +81,8 @@ function ProductManagement() {
   const handleOpenCreateModal = () => {
     setEditingId(null);
     setForm({
-      name: "", slug: "", summary: "", content: "", brand: "", price: "", featuredImage: "", categoryId: "", supplierId: ""
+      name: "", slug: "", summary: "", content: "", brand: "", price: "", featuredImage: "", categoryId: "", supplierId: "",
+      stockQuantity: "100"
     });
     setShowProductModal(true);
   };
@@ -84,7 +98,8 @@ function ProductManagement() {
       price: prod.price || "",
       featuredImage: prod.featuredImage || "",
       categoryId: prod.categoryId || (prod.category ? prod.category.id : ""),
-      supplierId: prod.supplierId || (prod.supplier ? prod.supplier.id : "")
+      supplierId: prod.supplierId || (prod.supplier ? prod.supplier.id : ""),
+      stockQuantity: ""
     });
     setShowProductModal(true);
   };
@@ -94,8 +109,13 @@ function ProductManagement() {
     setIsSubmitting(true);
     try {
       const payload = {
-        ...form,
+        name: form.name,
+        slug: form.slug,
+        summary: form.summary,
+        content: form.content,
+        brand: form.brand,
         price: parseFloat(form.price),
+        featuredImage: form.featuredImage,
         categoryId: form.categoryId ? parseInt(form.categoryId) : null,
         supplierId: form.supplierId ? parseInt(form.supplierId) : null
       };
@@ -103,7 +123,18 @@ function ProductManagement() {
       if (editingId) {
         await productService.updateProduct(editingId, payload);
       } else {
-        await productService.createProduct(payload);
+        const createdProduct = await productService.createProduct(payload);
+        // Tự động tạo một cấu hình biến thể mặc định với số lượng kho đã điền
+        if (createdProduct && createdProduct.id) {
+          const defaultVariant = {
+            name: "Mặc định",
+            sku: `${payload.slug.toUpperCase()}-DEF`,
+            price: payload.price,
+            stockQuantity: form.stockQuantity ? parseInt(form.stockQuantity) : 100,
+            productId: createdProduct.id
+          };
+          await productVariantService.create(defaultVariant);
+        }
       }
 
       setShowProductModal(false);
@@ -345,6 +376,7 @@ function ProductManagement() {
             <th>Thương hiệu</th>
             <th>Danh mục</th>
             <th>Giá gốc</th>
+            <th>Số lượng kho</th>
             <th>Biến thể</th>
             <th style={{ width: "240px" }}>Thao tác</th>
           </tr>
@@ -385,6 +417,27 @@ function ProductManagement() {
               <td style={{ fontWeight: "700", color: "var(--accent-pink)" }}>
                 {prod.price?.toLocaleString("vi-VN")}đ
               </td>
+              <td style={{ textAlign: "left" }}>
+                {(() => {
+                  const totalStock = prod.variants ? prod.variants.reduce((sum, v) => sum + (v.stockQuantity || 0), 0) : 0;
+                  return (
+                    <div>
+                      <div style={{ fontWeight: "bold", fontSize: "13px", marginBottom: "4px" }}>
+                        <span className={`badge ${totalStock === 0 ? "badge-pink" : totalStock < 20 ? "badge-orange" : "badge-green"}`}>
+                          Tổng: {totalStock} sp
+                        </span>
+                      </div>
+                      <div style={{ fontSize: "11px", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "2px" }}>
+                        {prod.variants && prod.variants.map(v => (
+                          <div key={v.id}>
+                            • {v.name}: <strong style={{ color: v.stockQuantity === 0 ? "var(--accent-pink)" : "var(--text-primary)" }}>{v.stockQuantity}</strong>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </td>
               <td>
                 <button 
                   onClick={() => handleOpenVariantModal(prod)}
@@ -403,7 +456,7 @@ function ProductManagement() {
           ))}
           {sortedProducts.length === 0 && (
             <tr>
-              <td colSpan="8" style={{ padding: "40px", color: "var(--text-muted)" }}>
+              <td colSpan="9" style={{ padding: "40px", color: "var(--text-muted)" }}>
                 Không tìm thấy sản phẩm nào khớp với bộ lọc.
               </td>
             </tr>
@@ -433,7 +486,14 @@ function ProductManagement() {
                       type="text" 
                       placeholder="VD: iPhone 15 Pro Max" 
                       value={form.name} 
-                      onChange={e => setForm({...form, name: e.target.value})} 
+                      onChange={e => {
+                        const newName = e.target.value;
+                        setForm({
+                          ...form,
+                          name: newName,
+                          slug: convertToSlug(newName)
+                        });
+                      }} 
                     />
                   </div>
 
@@ -468,6 +528,19 @@ function ProductManagement() {
                       onChange={e => setForm({...form, brand: e.target.value})} 
                     />
                   </div>
+
+                  {!editingId && (
+                    <div className="form-group">
+                      <label>Số lượng tồn kho ban đầu *</label>
+                      <input 
+                        required 
+                        type="number" 
+                        placeholder="VD: 100" 
+                        value={form.stockQuantity} 
+                        onChange={e => setForm({...form, stockQuantity: e.target.value})} 
+                      />
+                    </div>
+                  )}
 
                   <div className="form-group">
                     <label>Danh mục ngành hàng</label>

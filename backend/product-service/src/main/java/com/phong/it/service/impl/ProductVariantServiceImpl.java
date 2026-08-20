@@ -33,7 +33,9 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 
     @Override
     @Transactional
-    @CacheInvalidateAll(cacheName = "product-variants")
+    @CacheInvalidateAll(cacheName = "product-variant-single")
+    @CacheInvalidateAll(cacheName = "product-variants-list")
+    @CacheInvalidateAll(cacheName = "product-variants-all")
     public ProductVariantResponseDTO create(ProductVariantRequestDTO requestDTO) {
         // Kiểm tra SKU duy nhất
         ProductVariant existingSku = productVariantRepository.findBySku(requestDTO.sku());
@@ -55,7 +57,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
     }
 
     @Override
-    @CacheResult(cacheName = "product-variants")
+    @CacheResult(cacheName = "product-variant-single")
     public ProductVariantResponseDTO getById(Long id) {
         ProductVariant variant = productVariantRepository.findById(id);
         if (variant == null) {
@@ -65,7 +67,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
     }
 
     @Override
-    @CacheResult(cacheName = "product-variants")
+    @CacheResult(cacheName = "product-variants-all")
     public List<ProductVariantResponseDTO> getAll() {
         return productVariantRepository.listAll().stream()
                 .map(productVariantMapper::toResponseDTO)
@@ -73,7 +75,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
     }
 
     @Override
-    @CacheResult(cacheName = "product-variants")
+    @CacheResult(cacheName = "product-variants-list")
     public List<ProductVariantResponseDTO> getByProductId(Long productId) {
         return productVariantRepository.findByProductId(productId).stream()
                 .map(productVariantMapper::toResponseDTO)
@@ -82,7 +84,9 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 
     @Override
     @Transactional
-    @CacheInvalidateAll(cacheName = "product-variants")
+    @CacheInvalidateAll(cacheName = "product-variant-single")
+    @CacheInvalidateAll(cacheName = "product-variants-list")
+    @CacheInvalidateAll(cacheName = "product-variants-all")
     public ProductVariantResponseDTO update(Long id, ProductVariantRequestDTO requestDTO) {
         ProductVariant variant = productVariantRepository.findById(id);
         if (variant == null) {
@@ -116,7 +120,9 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 
     @Override
     @Transactional
-    @CacheInvalidateAll(cacheName = "product-variants")
+    @CacheInvalidateAll(cacheName = "product-variant-single")
+    @CacheInvalidateAll(cacheName = "product-variants-list")
+    @CacheInvalidateAll(cacheName = "product-variants-all")
     public void delete(Long id) {
         ProductVariant variant = productVariantRepository.findById(id);
         if (variant == null) {

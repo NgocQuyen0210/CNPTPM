@@ -61,6 +61,12 @@ public class UserServiceImpl implements UserService {
         }
 
         // Kiểm tra mật khẩu và mật khẩu xác nhận
+        if (requestDTO.password() == null || requestDTO.password().trim().isEmpty()) {
+            throw new WebApplicationException("Mật khẩu không được để trống", Status.BAD_REQUEST);
+        }
+        if (requestDTO.password().length() < 6) {
+            throw new WebApplicationException("Mật khẩu phải từ 6 ký tự trở lên", Status.BAD_REQUEST);
+        }
         if (!requestDTO.password().equals(requestDTO.confirmPassword())) {
             throw new WebApplicationException("Mật khẩu xác nhận không khớp", Status.BAD_REQUEST);
         }

@@ -35,6 +35,9 @@ public class ProductServiceImpl implements ProductService {
     @CacheInvalidateAll(cacheName = "products")
     public ProductResponseDTO create(ProductRequestDTO requestDTO) {
         Product product = productMapper.toEntity(requestDTO);
+        if (product.getStatus() == null) {
+            product.setStatus("SELLING");
+        }
 
         // Tải danh mục (Category) nếu có
         if (requestDTO.categoryId() != null) {

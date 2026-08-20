@@ -11,11 +11,8 @@ public record UserRegisterRequestDTO(
     @Email(message = "Email không hợp lệ")
     String email,
 
-    @NotBlank(message = "Mật khẩu không được để trống")
-    @Size(min = 6, message = "Password phải từ 6 ký tự")
     String password,
 
-    @NotBlank(message = "Xác nhận mật khẩu không được để trống")
     String confirmPassword,
 
     @NotBlank(message = "Họ và tên không được để trống")

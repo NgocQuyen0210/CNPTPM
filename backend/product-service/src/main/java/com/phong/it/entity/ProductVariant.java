@@ -38,7 +38,7 @@ public class ProductVariant extends PanacheEntityBase{
     private BigDecimal price; 
 
     @Column(name = "stock_quantity")
-    private Integer stockQuantity = 0; 
+    private Integer stockQuantity = 100; 
 
     // relationship with Product (N-1)
     @ManyToOne(fetch = FetchType.LAZY)

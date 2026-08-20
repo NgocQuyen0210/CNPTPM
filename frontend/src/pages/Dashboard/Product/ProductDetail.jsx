@@ -71,8 +71,7 @@ function ProductDetail() {
 
   const handleAddToCart = async () => {
     try {
-      await addToCart({ id: product.id }, quantity, selectedVariant?.id);
-      alert("Đã thêm vào giỏ hàng thành công!");
+      await addToCart({ id: product.id, name: product.name }, quantity, selectedVariant?.id);
     } catch (err) {
       console.error(err);
     }

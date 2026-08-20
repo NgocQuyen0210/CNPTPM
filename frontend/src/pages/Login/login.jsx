@@ -14,6 +14,7 @@ function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setErrorMsg(""); // Xóa thông báo lỗi cũ trước khi gửi request mới
     try {
       const response = await authService.login({ username, password });
       authService.setSession(response);
@@ -45,11 +46,11 @@ function Login() {
 
           <div className="input-login">
             <div className="input-login-user">
-              <input type="text" className="user" placeholder="Tên đăng nhập" value={username} onChange={e => setUsername(e.target.value)} />
+              <input type="text" className="user" placeholder="Tên đăng nhập" value={username} onChange={e => { setUsername(e.target.value); setErrorMsg(""); }} />
               <FaUser></FaUser>
             </div>
             <div className="input-login-pass">
-              <input type="password" className="pass" placeholder="Mật khẩu" value={password} onChange={e => setPassword(e.target.value)} />
+              <input type="password" className="pass" placeholder="Mật khẩu" value={password} onChange={e => { setPassword(e.target.value); setErrorMsg(""); }} />
               <FaLock></FaLock>
             </div>
           </div>

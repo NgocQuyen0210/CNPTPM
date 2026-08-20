@@ -37,6 +37,8 @@ public class AuthResource {
                 .upn(user.username())
                 .subject(String.valueOf(user.id())) // Sửa subject thành dạng chuỗi của ID để tránh NumberFormatException
                 .claim("userId", user.id())
+                .claim("fullName", user.fullName())
+                .claim("email", user.email())
                 .groups(user.roles()) // Lấy danh sách Roles thực tế của người dùng từ DB
                 .expiresIn(Duration.ofHours(1))
                 .sign();

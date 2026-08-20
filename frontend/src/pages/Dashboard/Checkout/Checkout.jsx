@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../../../context/CartContext";
 import orderService from "../../../services/orderService";
+import qrPaymentImg from "../../../assets/image/qr-payment.png";
 import "./Checkout.css";
 
 function Checkout() {
@@ -47,10 +48,11 @@ function Checkout() {
       await orderService.placeOrder(payload);
       alert("Đặt hàng thành công!");
       clearCart(); // Xóa giỏ hàng
-      navigate("/dashboard/menu"); // Chuyển về trang chủ
+      navigate("/dashboard/orders"); // Chuyển về trang theo dõi đơn hàng
     } catch (error) {
       console.error("Lỗi đặt hàng:", error);
-      alert("Đặt hàng thất bại. Vui lòng kiểm tra lại thông tin!");
+      const errorMsg = error.response?.data?.message || "Đặt hàng thất bại. Vui lòng kiểm tra lại thông tin!";
+      alert(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -106,6 +108,13 @@ function Checkout() {
                   <span className="option-desc">Thanh toán trực tuyến bằng cách quét mã QR hoặc chuyển khoản.</span>
                 </div>
               </label>
+
+              {paymentMethod === "BANK_TRANSFER" && (
+                <div className="qr-payment-container">
+                  <img src={qrPaymentImg} alt="QR Payment" className="qr-payment-img" />
+                  <p className="qr-payment-text">Quét mã QR trên để chuyển khoản nhanh 24/7</p>
+                </div>
+              )}
             </div>
           </div>
 

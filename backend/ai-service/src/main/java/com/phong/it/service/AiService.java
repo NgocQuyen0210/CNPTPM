@@ -105,6 +105,15 @@ public class AiService {
 
         String systemPrompt = "Bạn là Trợ lý AI Tư vấn Mua sắm chuyên nghiệp của cửa hàng Đồ Điện Tử & Phụ Kiện Công Nghệ chính hãng.\n" +
                 "Shop CHỈ kinh doanh các dòng sản phẩm Đồ Điện Tử (Điện thoại/Smartphone, Laptop, Tablet, Smartwatch) và Phụ kiện công nghệ (Tai nghe, Loa, Sạc, Cáp, Bàn phím, Chuột, Ốp lưng, AirTag...).\n\n" +
+                "Hãy tuân thủ các chính sách của cửa hàng khi khách hỏi:\n" +
+                "1. Địa chỉ & Giờ làm việc: Cửa hàng ở trung tâm TP.HCM và Hà Nội, mở cửa 8:30 - 21:30 hàng ngày.\n" +
+                "2. Bảo hành: Cam kết chính hãng 100%, bảo hành 12-24 tháng theo hãng, 1 đổi 1 trong 30 ngày đầu nếu lỗi NSX.\n" +
+                "3. Giao hàng: Giao hàng toàn quốc. Nội thành nhận hàng sau 1-2 ngày, tỉnh khác 3-5 ngày. Miễn phí vận chuyển từ đơn hàng 1 triệu VNĐ.\n" +
+                "4. Thanh toán: Hỗ trợ COD (khi nhận hàng), Chuyển khoản ngân hàng (Internet Banking), ví điện tử Momo, VNPay.\n" +
+                "5. Đổi trả: Hỗ trợ đổi trả trong 7 ngày đối với hàng chưa sử dụng, còn nguyên hộp/tem mác.\n" +
+                "6. Hủy đơn: Hủy trong mục Lịch sử mua hàng nếu chưa giao hàng. Nếu đang giao, liên hệ hotline 1900 xxxx để hỗ trợ.\n" +
+                "7. Hóa đơn VAT: Hỗ trợ xuất hóa đơn VAT điện tử, khách ghi chú khi đặt hàng hoặc báo CSKH.\n" +
+                "8. Khuyến mãi: Mã giảm giá ở banner trang chủ, miễn phí ship đơn từ 1 triệu.\n\n" +
                 "Dưới đây là Danh sách Sản phẩm hiện có trong kho hàng của shop:\n" +
                 objectMapper.writeValueAsString(simplifiedCatalog) + "\n\n" +
                 "Nhiệm vụ của bạn:\n" +
@@ -117,12 +126,12 @@ public class AiService {
 
         // Build Gemini API payload
         ObjectNode payload = objectMapper.createObjectNode();
-        ArrayNode contentsNode = payload.putArray("contents");
+        
+        // Use systemInstruction for system prompt (avoids role alternation issues)
+        ObjectNode systemInstruction = payload.putObject("systemInstruction");
+        systemInstruction.putArray("parts").addObject().put("text", systemPrompt);
 
-        // System prompt as first user part
-        ObjectNode systemMsg = contentsNode.addObject();
-        systemMsg.put("role", "user");
-        systemMsg.putArray("parts").addObject().put("text", systemPrompt);
+        ArrayNode contentsNode = payload.putArray("contents");
 
         // Add last 6 messages of chat history
         int startIdx = Math.max(0, history.size() - 6);
@@ -182,6 +191,68 @@ public class AiService {
         return new AiConsultResponse(cleanText, recommendedProducts);
     }
 
+    private String resolveTopCategory(Long categoryId, String productName) {
+        if (categoryId == null) return "";
+        
+        // Map Điện thoại (Phones) with name exclusions for misclassified Apple products
+        if (categoryId == 1 || categoryId == 4 || categoryId == 5 || 
+            (categoryId >= 35 && categoryId <= 42)) {
+            String lowerName = productName.toLowerCase();
+            if (lowerName.contains("imac") || lowerName.contains("studio") || 
+                lowerName.contains("airtag") || lowerName.contains("airpods") || 
+                lowerName.contains("watch") || lowerName.contains("tag") || 
+                lowerName.contains("buds") || lowerName.contains("sạc") || 
+                lowerName.contains("cáp") || lowerName.contains("ốp lưng")) {
+                
+                if (lowerName.contains("imac") || lowerName.contains("studio")) {
+                    return "laptop";
+                }
+                if (lowerName.contains("watch")) {
+                    return "đồng hồ";
+                }
+                return "phụ kiện";
+            }
+            return "điện thoại";
+        }
+        
+        // Map Laptop
+        if (categoryId == 2 || (categoryId >= 13 && categoryId <= 21)) {
+            return "laptop";
+        }
+        
+        // Map Tablet
+        if (categoryId == 11 || categoryId == 22 || categoryId == 23) {
+            return "tablet";
+        }
+        
+        // Map Smartwatch
+        if (categoryId == 12 || categoryId == 24 || categoryId == 25) {
+            return "đồng hồ";
+        }
+        
+        // Map Accessories
+        if (categoryId == 3 || (categoryId >= 26 && categoryId <= 34)) {
+            return "phụ kiện";
+        }
+        
+        // Name checks as fallback
+        String lowerName = productName.toLowerCase();
+        if (lowerName.contains("iphone") || lowerName.contains("phone") || lowerName.contains("pixel")) {
+            return "điện thoại";
+        }
+        if (lowerName.contains("macbook") || lowerName.contains("laptop") || lowerName.contains("book")) {
+            return "laptop";
+        }
+        if (lowerName.contains("ipad") || lowerName.contains("tablet") || lowerName.contains("tab")) {
+            return "tablet";
+        }
+        if (lowerName.contains("watch")) {
+            return "đồng hồ";
+        }
+        
+        return "";
+    }
+
     private AiConsultResponse smartLocalRecommendation(String userMessage, List<ProductResponseDTO> catalog) {
         if (catalog == null || catalog.isEmpty()) {
             return new AiConsultResponse(
@@ -190,7 +261,133 @@ public class AiService {
             );
         }
 
-        String lowerMsg = userMessage.toLowerCase();
+        String lowerMsg = userMessage.toLowerCase().trim();
+
+        // 1. FAQ / General Conversation Handling
+        // Greeting / Welcome
+        if (lowerMsg.matches(".*(xin chào|hello|hi|chào shop|chào bạn|chào ad|tư vấn).*") || lowerMsg.equals("chào") || lowerMsg.equals("hi") || lowerMsg.equals("hello")) {
+            if (!lowerMsg.contains("điện thoại") && !lowerMsg.contains("laptop") && !lowerMsg.contains("tai nghe") && 
+                !lowerMsg.contains("đồng hồ") && !lowerMsg.contains("phụ kiện") && !lowerMsg.contains("máy tính") &&
+                !lowerMsg.contains("ipad") && !lowerMsg.contains("tab") && !lowerMsg.contains("quần") && !lowerMsg.contains("áo")) {
+                return new AiConsultResponse(
+                        "Dạ, shop xin kính chào quý khách! 👋 Shop chuyên cung cấp Đồ Điện Tử & Phụ Kiện Công Nghệ chính hãng. Shop có thể giúp gì cho bạn hôm nay ạ?",
+                        Collections.emptyList()
+                );
+            }
+        }
+        
+        // Store location / Hours
+        if (lowerMsg.contains("ở đâu") || lowerMsg.contains("địa chỉ") || lowerMsg.contains("cửa hàng") || 
+            lowerMsg.contains("dia chi") || lowerMsg.contains("address") || lowerMsg.contains("chi nhánh")) {
+            return new AiConsultResponse(
+                    "Dạ, cửa hàng của shop nằm tại khu vực trung tâm TP. Hồ Chí Minh và Hà Nội, mở cửa từ 8:30 đến 21:30 hàng ngày. Bạn có thể đặt hàng trực tuyến ngay trên website này để được giao tận nơi cực nhanh nhé! 🚚",
+                    Collections.emptyList()
+            );
+        }
+        
+        // Warranty policy
+        if (lowerMsg.contains("bảo hành") || lowerMsg.contains("bao hanh")) {
+            return new AiConsultResponse(
+                    "Dạ, toàn bộ sản phẩm công nghệ tại shop cam kết chính hãng 100% và bảo hành tiêu chuẩn từ 12 đến 24 tháng theo hãng. Đặc biệt, shop hỗ trợ 1 đổi 1 trong vòng 30 ngày đầu nếu phát sinh lỗi từ nhà sản xuất ạ! 🛡️",
+                    Collections.emptyList()
+            );
+        }
+        
+        // Shipping / Delivery
+        if (lowerMsg.contains("giao hàng") || lowerMsg.contains("ship") || lowerMsg.contains("vận chuyển") || lowerMsg.contains("bao lâu")) {
+            return new AiConsultResponse(
+                    "Dạ, shop hỗ trợ giao hàng nhanh toàn quốc. Các quận nội thành TP.HCM và Hà Nội nhận hàng chỉ trong 1-2 ngày, các tỉnh thành khác từ 3-5 ngày làm việc ạ. Đơn hàng từ 1 triệu sẽ được miễn phí vận chuyển nhé! 📦",
+                    Collections.emptyList()
+            );
+        }
+        
+        // Contact details / Hotline
+        if (lowerMsg.contains("sđt") || lowerMsg.contains("sdt") || lowerMsg.contains("liên hệ") || 
+            lowerMsg.contains("hotline") || lowerMsg.contains("zalo") || lowerMsg.contains("số điện thoại")) {
+            return new AiConsultResponse(
+                    "Dạ, quý khách cần hỗ trợ gấp vui lòng liên hệ hotline chăm sóc khách hàng của shop: **1900 xxxx** hoặc chat trực tiếp qua Zalo/Fanpage để nhân viên hỗ trợ kịp thời nhé! 📞",
+                    Collections.emptyList()
+            );
+        }
+        
+        // Thank you
+        if (lowerMsg.contains("cảm ơn") || lowerMsg.contains("cám ơn") || lowerMsg.contains("thank")) {
+            return new AiConsultResponse(
+                    "Dạ không có gì ạ! Rất hân hạnh được phục vụ quý khách. Chúc quý khách một ngày tốt lành và lựa chọn được sản phẩm ưng ý! 😊",
+                    Collections.emptyList()
+            );
+        }
+
+        // Payment options
+        if (lowerMsg.contains("thanh toán") || lowerMsg.contains("chuyển khoản") || lowerMsg.contains("cod") || 
+            lowerMsg.contains("banking") || lowerMsg.contains("trả tiền") || lowerMsg.contains("momo") || lowerMsg.contains("vnpay")) {
+            return new AiConsultResponse(
+                    "Dạ, shop hỗ trợ nhiều phương thức thanh toán linh hoạt gồm: Thanh toán khi nhận hàng (COD), Chuyển khoản ngân hàng (Internet Banking) và thanh toán qua ví điện tử Momo, VNPay. Quý khách có thể chọn phương thức phù hợp ở bước đặt hàng nhé! 💳",
+                    Collections.emptyList()
+            );
+        }
+
+        // Order cancellation
+        if (lowerMsg.contains("hủy đơn") || lowerMsg.contains("huy don") || lowerMsg.contains("không mua nữa") || lowerMsg.contains("huỷ đơn")) {
+            return new AiConsultResponse(
+                    "Dạ, quý khách có thể tự hủy đơn hàng trong mục 'Lịch sử mua hàng' của tài khoản cá nhân nếu đơn hàng chưa chuyển sang trạng thái vận chuyển. Nếu đơn hàng đã giao đi, vui lòng liên hệ Hotline **1900 xxxx** để được hỗ trợ xử lý kịp thời ạ! ❌",
+                    Collections.emptyList()
+            );
+        }
+
+        // Returns / Exchanges
+        if (lowerMsg.contains("đổi trả") || lowerMsg.contains("doi tra") || lowerMsg.contains("trả hàng") || 
+            lowerMsg.contains("hoàn tiền") || lowerMsg.contains("trả lại")) {
+            return new AiConsultResponse(
+                    "Dạ, shop hỗ trợ đổi trả sản phẩm trong vòng 7 ngày kể từ khi nhận hàng nếu sản phẩm còn nguyên hộp, tem mác và chưa qua sử dụng. Nếu sản phẩm phát sinh lỗi kỹ thuật của nhà sản xuất, shop hỗ trợ 1 đổi 1 miễn phí trong 30 ngày đầu tiên ạ! 🔄",
+                    Collections.emptyList()
+            );
+        }
+
+        // Promotion / Discount
+        if (lowerMsg.contains("khuyến mãi") || lowerMsg.contains("khuyen mai") || lowerMsg.contains("giảm giá") || 
+            lowerMsg.contains("giam gia") || lowerMsg.contains("voucher") || lowerMsg.contains("ưu đãi")) {
+            return new AiConsultResponse(
+                    "Dạ, shop luôn có các chương trình ưu đãi hấp dẫn và mã giảm giá được cập nhật ngay tại Banner trên trang chủ website. Ngoài ra, mọi đơn hàng có giá trị từ 1 triệu đồng trở lên sẽ được miễn phí vận chuyển trên toàn quốc ạ! 🎁",
+                    Collections.emptyList()
+            );
+        }
+
+        // Product authenticity
+        if (lowerMsg.contains("chính hãng") || lowerMsg.contains("chinh hang") || lowerMsg.contains("hàng thật") || 
+            lowerMsg.contains("hàng giả") || lowerMsg.contains("nhái") || lowerMsg.contains("uy tín")) {
+            return new AiConsultResponse(
+                    "Dạ quý khách hoàn toàn yên tâm ạ! Shop cam kết 100% sản phẩm bán ra đều là hàng chính hãng từ các thương hiệu lớn, đầy đủ hộp, phụ kiện, hóa đơn và thẻ bảo hành đi kèm. Shop cam kết đền bù 200% giá trị đơn hàng nếu phát hiện hàng giả, hàng nhái ạ! 🌟",
+                    Collections.emptyList()
+            );
+        }
+
+        // Order tracking / status
+        if (lowerMsg.contains("kiểm tra đơn") || lowerMsg.contains("kiem tra don") || lowerMsg.contains("trạng thái đơn") || 
+            lowerMsg.contains("đơn hàng của tôi") || lowerMsg.contains("đơn hàng đâu")) {
+            return new AiConsultResponse(
+                    "Dạ, quý khách có thể kiểm tra trạng thái đơn hàng bất cứ lúc nào bằng cách vào mục 'Đơn hàng của tôi' trong trang cá nhân trên website. Hệ thống sẽ cập nhật trạng thái đơn hàng chi tiết theo thời gian thực ạ! 📦",
+                    Collections.emptyList()
+            );
+        }
+
+        // Working hours
+        if (lowerMsg.contains("giờ mở cửa") || lowerMsg.contains("giờ làm việc") || lowerMsg.contains("mấy giờ") || 
+            lowerMsg.contains("mở cửa lúc")) {
+            return new AiConsultResponse(
+                    "Dạ, cửa hàng của shop mở cửa đón khách từ 8:30 đến 21:30 tất cả các ngày trong tuần (bao gồm cả Thứ 7 và Chủ Nhật). Kênh đặt hàng trực tuyến trên website luôn hoạt động 24/7 để phục vụ quý khách ạ! ⏰",
+                    Collections.emptyList()
+            );
+        }
+
+        // VAT Invoice
+        if (lowerMsg.contains("hóa đơn đỏ") || lowerMsg.contains("vat") || lowerMsg.contains("hóa đơn vat") || 
+            lowerMsg.contains("xuất hóa đơn")) {
+            return new AiConsultResponse(
+                    "Dạ, shop hỗ trợ xuất hóa đơn VAT (GTGT) điện tử cho cả khách hàng cá nhân và doanh nghiệp. Quý khách vui lòng điền thông tin xuất hóa đơn (Tên công ty, Mã số thuế, Địa chỉ) ở phần ghi chú khi đặt hàng hoặc báo CSKH ngay sau khi đặt hàng nhé! 🧾",
+                    Collections.emptyList()
+            );
+        }
 
         Double maxPrice = null;
         Double minPrice = null;
@@ -222,7 +419,23 @@ public class AiService {
         List<String> knownBrands = Arrays.asList("apple", "iphone", "samsung", "dell", "asus", "lenovo", "hp", "acer", "msi", "sony", "xiaomi", "oppo");
         List<String> matchedBrands = knownBrands.stream().filter(lowerMsg::contains).collect(Collectors.toList());
 
-        // Category keywords mapping
+        // Category matching check
+        String requestedCategory = "";
+        if (lowerMsg.contains("điện thoại") || lowerMsg.contains("phone") || lowerMsg.contains("iphone") || lowerMsg.contains("smartphone") || lowerMsg.contains("đt")) {
+            requestedCategory = "điện thoại";
+        } else if (lowerMsg.contains("laptop") || lowerMsg.contains("máy tính xách tay") || lowerMsg.contains("may tinh") || lowerMsg.contains("macbook")) {
+            requestedCategory = "laptop";
+        } else if (lowerMsg.contains("tablet") || lowerMsg.contains("máy tính bảng") || lowerMsg.contains("ipad") || lowerMsg.contains("tab")) {
+            requestedCategory = "tablet";
+        } else if (lowerMsg.contains("đồng hồ") || lowerMsg.contains("watch") || lowerMsg.contains("smartwatch")) {
+            requestedCategory = "đồng hồ";
+        } else if (lowerMsg.contains("tai nghe") || lowerMsg.contains("phụ kiện") || lowerMsg.contains("sạc") || lowerMsg.contains("cáp") || lowerMsg.contains("chuột") || lowerMsg.contains("bàn phím")) {
+            requestedCategory = "phụ kiện";
+        } else if (lowerMsg.contains("áo") || lowerMsg.contains("quần") || lowerMsg.contains("váy") || lowerMsg.contains("đầm") || lowerMsg.contains("thời trang")) {
+            requestedCategory = "thời trang";
+        }
+
+        // Category keywords mapping (legacy fallback)
         Map<String, List<String>> categoryKeywords = new HashMap<>();
         categoryKeywords.put("điện thoại", Arrays.asList("điện thoại", "phone", "iphone", "smartphone", "di dien thoai", "đt"));
         categoryKeywords.put("laptop", Arrays.asList("laptop", "máy tính xách tay", "may tinh", "macbook", "pc"));
@@ -264,6 +477,16 @@ public class AiService {
             if (minPrice != null && pPrice < minPrice) continue;
             if (maxPrice != null || minPrice != null) score += 20;
 
+            // Big Category matching boost or penalty
+            if (!requestedCategory.isEmpty()) {
+                String topCat = resolveTopCategory(p.categoryId(), p.name());
+                if (topCat.equals(requestedCategory)) {
+                    score += 200; // Large boost for matching target category
+                } else {
+                    score -= 100; // Penalty for other categories
+                }
+            }
+
             // Brand matching
             for (String brand : matchedBrands) {
                 if (pBrand.contains(brand) || pName.contains(brand)) {
@@ -280,7 +503,7 @@ public class AiService {
                 }
             }
 
-            // Category matching
+            // Legacy Category matching fallback
             for (Map.Entry<String, List<String>> entry : categoryKeywords.entrySet()) {
                 String catName = entry.getKey();
                 List<String> keys = entry.getValue();
@@ -301,6 +524,35 @@ public class AiService {
                     if (pSummary.contains(intent) || pName.contains(intent) || keys.stream().anyMatch(pSummary::contains) || keys.stream().anyMatch(pName::contains)) {
                         score += 25;
                     }
+                }
+            }
+
+            // Custom target intent boosts (matching specific flagship specs)
+            if (lowerMsg.contains("chụp ảnh") || lowerMsg.contains("camera") || lowerMsg.contains("chụp hình") || lowerMsg.contains("quay phim") || lowerMsg.contains("sống ảo")) {
+                if (pName.contains("pro max") || pName.contains("ultra") || pName.contains("xperia") || pName.contains("pro")) {
+                    score += 60; // Extra boost for flagship cameras!
+                }
+            }
+            if (lowerMsg.contains("chơi game") || lowerMsg.contains("game") || lowerMsg.contains("gaming") || lowerMsg.contains("cấu hình mạnh") || lowerMsg.contains("mạnh nhất")) {
+                if (pName.contains("gaming") || pName.contains("ultra") || pName.contains("max") || pName.contains("pro") || pName.contains("msi") || pName.contains("rog")) {
+                    score += 60; // Extra boost for gaming hardware!
+                }
+            }
+            if (lowerMsg.contains("học tập") || lowerMsg.contains("văn phòng") || lowerMsg.contains("sinh viên") || lowerMsg.contains("mỏng nhẹ") || lowerMsg.contains("gọn nhẹ") || lowerMsg.contains("làm việc")) {
+                if (pName.contains("air") || pName.contains("slim") || pName.contains("light") || pName.contains("book") || pName.contains("a55") || pName.contains("watch")) {
+                    score += 50; // Extra boost for office/portable devices!
+                }
+            }
+            if (lowerMsg.contains("giá rẻ") || lowerMsg.contains("rẻ") || lowerMsg.contains("tiết kiệm") || lowerMsg.contains("bình dân") || lowerMsg.contains("học sinh")) {
+                if (pPrice < 5000000.0) {
+                    score += 80;
+                } else if (pPrice < 15000000.0) {
+                    score += 40;
+                }
+            }
+            if (lowerMsg.contains("mới nhất") || lowerMsg.contains("bán chạy") || lowerMsg.contains("hot") || lowerMsg.contains("tốt nhất") || lowerMsg.contains("nên mua")) {
+                if (pName.contains("15 pro") || pName.contains("s24") || pName.contains("m3") || pName.contains("buds 2 pro") || pName.contains("watch 6")) {
+                    score += 50;
                 }
             }
 
@@ -330,6 +582,16 @@ public class AiService {
         } else if (!matchedBrands.isEmpty()) {
             String brandStr = matchedBrands.stream().map(String::toUpperCase).collect(Collectors.joining(", "));
             adviceText = String.format("Shop xin gợi ý các sản phẩm thuộc thương hiệu **%s** được ưa chuộng nhất hiện nay:\n", brandStr);
+        } else if ("điện thoại".equals(requestedCategory)) {
+            adviceText = "Dạ, shop gửi bạn tham khảo các mẫu điện thoại/smartphone chính hãng, cấu hình mạnh mẽ và thiết kế thời thượng nhất đang có sẵn hàng tại shop:\n";
+        } else if ("laptop".equals(requestedCategory)) {
+            adviceText = "Dạ, đây là những mẫu laptop học tập, văn phòng mỏng nhẹ và laptop gaming cấu hình cao cực tốt dành cho bạn:\n";
+        } else if ("đồng hồ".equals(requestedCategory)) {
+            adviceText = "Dạ, shop gửi bạn các mẫu đồng hồ thông minh theo dõi sức khỏe và hỗ trợ tập luyện thể thao bán chạy nhất:\n";
+        } else if ("phụ kiện".equals(requestedCategory)) {
+            adviceText = "Dạ, shop có sẵn các loại phụ kiện cao cấp như tai nghe chống ồn, chuột, bàn phím cơ, sạc cáp chính hãng sau:\n";
+        } else if ("thời trang".equals(requestedCategory)) {
+            adviceText = "Dạ, đây là những mẫu quần áo, váy đầm thời trang nam nữ chất liệu cao cấp và kiểu dáng hot trend gửi bạn:\n";
         } else if (lowerMsg.contains("game") || lowerMsg.contains("gaming")) {
             adviceText = "Dành cho nhu cầu chơi game & giải trí hiệu năng cao, đây là những sản phẩm có cấu hình cực tốt trong tầm giá:\n";
         } else if (lowerMsg.contains("văn phòng") || lowerMsg.contains("học tập") || lowerMsg.contains("mỏng nhẹ")) {

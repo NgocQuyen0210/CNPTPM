@@ -100,14 +100,10 @@ public class OrderServiceImpl implements OrderService {
             BigDecimal itemTotal = variant.price().multiply(BigDecimal.valueOf(quantity));
             totalPrice = totalPrice.add(itemTotal);
 
-            // Trừ kho và tạo StockMovement OUT
-            StockMovementRequestDTO movementDTO = new StockMovementRequestDTO(
-                    variant.id(),
-                    quantity,
-                    MovementType.OUT,
-                    "Xuất kho cho đơn hàng mới của user " + userId
-            );
-            productServiceClient.createStockMovement(movementDTO);
+            // Kiểm tra tồn kho trước khi đặt hàng (chưa trừ kho thực tế)
+            if (variant.stockQuantity() == null || variant.stockQuantity() < quantity) {
+                throw new BadRequestException("Sản phẩm '" + variant.name() + "' không đủ số lượng tồn kho. Hiện tại chỉ còn: " + (variant.stockQuantity() == null ? 0 : variant.stockQuantity()));
+            }
         }
 
         // Xử lý mã giảm giá (Coupon) thực tế
@@ -150,19 +146,42 @@ public class OrderServiceImpl implements OrderService {
         return mapToResponseDTO(order);
     }
 
+    private void checkAndTransitionStatus(Order order) {
+        if (order == null || order.getCreatedAt() == null) return;
+        OrderStatus currentStatus = order.getStatus();
+        
+        // Only auto-transition active, non-terminal orders (PENDING, PROCESSING, SHIPPED)
+        if (currentStatus == OrderStatus.PENDING || currentStatus == OrderStatus.PROCESSING || currentStatus == OrderStatus.SHIPPED) {
+            long daysElapsed = java.time.temporal.ChronoUnit.DAYS.between(order.getCreatedAt(), java.time.LocalDateTime.now());
+            if (daysElapsed >= 2) {
+                order.setStatus(OrderStatus.DELIVERED);
+                deductStockForOrder(order); // Trừ kho tự động khi giao thành công
+            } else if (daysElapsed >= 1 && (currentStatus == OrderStatus.PENDING || currentStatus == OrderStatus.PROCESSING)) {
+                order.setStatus(OrderStatus.SHIPPED);
+            }
+        }
+    }
+
     @Override
+    @Transactional
     public List<OrderResponseDTO> getOrderHistory(Long userId) {
-        return orderRepository.findByUserId(userId).stream()
+        List<Order> orders = orderRepository.findByUserId(userId);
+        for (Order order : orders) {
+            checkAndTransitionStatus(order);
+        }
+        return orders.stream()
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
+    @Transactional
     public OrderResponseDTO getOrderById(Long id) {
         Order order = orderRepository.findById(id);
         if (order == null) {
             throw new NotFoundException("Không tìm thấy đơn hàng với ID: " + id);
         }
+        checkAndTransitionStatus(order);
         return mapToResponseDTO(order);
     }
 
@@ -174,23 +193,77 @@ public class OrderServiceImpl implements OrderService {
             throw new NotFoundException("Không tìm thấy đơn hàng với ID: " + id);
         }
         
-        // Cập nhật trạng thái
-        order.setStatus(status);
+        // Đồng bộ trạng thái tự động trước
+        checkAndTransitionStatus(order);
+        
+        OrderStatus currentStatus = order.getStatus();
 
-        // Nếu trạng thái là CANCELLED, có thể cần cộng lại kho (tạo StockMovement IN hoặc RETURN)
+        // 1. Validation for user-triggered cancellations
         if (status == OrderStatus.CANCELLED) {
-            for (OrderItem item : order.getOrderItems()) {
-                StockMovementRequestDTO returnDTO = new StockMovementRequestDTO(
-                        item.getProductVariantId(),
-                        item.getQuantity(),
-                        MovementType.RETURN,
-                        "Hoàn kho do đơn hàng #" + id + " bị hủy"
-                );
-                productServiceClient.createStockMovement(returnDTO);
+            if (currentStatus == OrderStatus.SHIPPED || currentStatus == OrderStatus.DELIVERED) {
+                throw new BadRequestException("Đơn hàng đang giao hoặc đã giao, không thể hủy.");
+            }
+            if (currentStatus == OrderStatus.COMPLETED || currentStatus == OrderStatus.RETURNED) {
+                throw new BadRequestException("Đơn hàng đã hoàn thành hoặc đã trả hàng, không thể hủy.");
             }
         }
 
+        // 2. Validation for completing order (received)
+        if (status == OrderStatus.COMPLETED) {
+            if (currentStatus != OrderStatus.DELIVERED) {
+                throw new BadRequestException("Chỉ có thể xác nhận nhận hàng khi đơn hàng ở trạng thái đã giao đến bạn.");
+            }
+        }
+
+        // 3. Validation for returning order
+        if (status == OrderStatus.RETURNED) {
+            if (currentStatus != OrderStatus.DELIVERED) {
+                throw new BadRequestException("Chỉ có thể hoàn hàng khi đơn hàng ở trạng thái đã giao đến bạn.");
+            }
+        }
+
+        // Cập nhật trạng thái
+        order.setStatus(status);
+
+        // Kiểm tra xem trạng thái mới và cũ có phải là giao hàng thành công hay không
+        boolean isNowDelivered = (status == OrderStatus.DELIVERED || status == OrderStatus.COMPLETED);
+        boolean wasDelivered = (currentStatus == OrderStatus.DELIVERED || currentStatus == OrderStatus.COMPLETED);
+        
+        if (isNowDelivered && !wasDelivered) {
+            deductStockForOrder(order);
+        }
+        
+        if (status == OrderStatus.RETURNED && wasDelivered) {
+            returnStockForOrder(order);
+        }
+
         return mapToResponseDTO(order);
+    }
+
+    private void deductStockForOrder(Order order) {
+        if (order.getOrderItems() == null) return;
+        for (OrderItem item : order.getOrderItems()) {
+            StockMovementRequestDTO movementDTO = new StockMovementRequestDTO(
+                    item.getProductVariantId(),
+                    item.getQuantity(),
+                    MovementType.OUT,
+                    "Xuất kho cho đơn hàng #" + order.getId() + " giao thành công"
+            );
+            productServiceClient.createStockMovement(movementDTO);
+        }
+    }
+
+    private void returnStockForOrder(Order order) {
+        if (order.getOrderItems() == null) return;
+        for (OrderItem item : order.getOrderItems()) {
+            StockMovementRequestDTO returnDTO = new StockMovementRequestDTO(
+                    item.getProductVariantId(),
+                    item.getQuantity(),
+                    MovementType.RETURN,
+                    "Hoàn kho do đơn hàng #" + order.getId() + " bị trả hàng"
+            );
+            productServiceClient.createStockMovement(returnDTO);
+        }
     }
 
     private OrderResponseDTO mapToResponseDTO(Order order) {
