@@ -1,0 +1,66 @@
+[ {
+  "id" : 1,
+  "name" : "Khach hang Test",
+  "email" : "test@gmail.com",
+  "subject" : "Hoi ve san pham",
+  "message" : "Toi muon hoi san pham nay con mau xanh la khong shop?",
+  "replies" : [ ],
+  "status" : "PENDING",
+  "createdAt" : "2026-08-21 19:18:24"
+}, {
+  "id" : 2,
+  "name" : "Khach hang Test",
+  "email" : "test@gmail.com",
+  "subject" : "Hoi ve san pham",
+  "message" : "Toi muon hoi san pham nay con mau xanh la khong shop?",
+  "replies" : [ ],
+  "status" : "PENDING",
+  "createdAt" : "2026-08-21 19:34:41"
+}, {
+  "id" : 3,
+  "name" : "Ngọc Quyền",
+  "email" : "lyngocquyen02102005@gmail.com",
+  "subject" : "hehe",
+  "message" : "heheheheh",
+  "replies" : [ ],
+  "status" : "PENDING",
+  "createdAt" : "2026-08-21 19:40:36"
+}, {
+  "id" : 4,
+  "name" : "Nguyễn Văn A",
+  "email" : "vana@gmail.com",
+  "subject" : "hehe",
+  "message" : "rep taooo",
+  "replies" : [ {
+    "id" : 4,
+    "message" : "vâng sếp",
+    "createdAt" : "2026-08-21 19:43:55"
+  }, {
+    "id" : 5,
+    "message" : "sếp thích đánh nhau không",
+    "createdAt" : "2026-08-21 20:14:14"
+  } ],
+  "status" : "REPLIED",
+  "createdAt" : "2026-08-21 19:43:22"
+}, {
+  "id" : 5,
+  "name" : "Nguyễn Văn A",
+  "email" : "vana@gmail.com",
+  "subject" : "đồng ý ",
+  "message" : "ok chứ ",
+  "replies" : [ {
+    "id" : 6,
+    "message" : "xin địa chỉ ",
+    "createdAt" : "2026-08-21 21:34:09"
+  }, {
+    "id" : 7,
+    "message" : "luôn và ngay ",
+    "createdAt" : "2026-08-21 21:34:25"
+  }, {
+    "id" : 8,
+    "message" : "chan bố mày đi ",
+    "createdAt" : "2026-08-21 21:35:45"
+  } ],
+  "status" : "REPLIED",
+  "createdAt" : "2026-08-21 21:28:29"
+} ]

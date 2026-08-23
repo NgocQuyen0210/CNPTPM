@@ -1,6 +1,6 @@
 import React from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import { FaChartLine, FaFolder, FaBoxOpen, FaSignOutAlt, FaUserShield, FaUsers } from "react-icons/fa";
+import { FaChartLine, FaFolder, FaBoxOpen, FaSignOutAlt, FaUserShield, FaUsers, FaEnvelope } from "react-icons/fa";
 import authService from "../services/authService";
 import "./admin.css";
 
@@ -36,6 +36,9 @@ function AdminLayout() {
             </li>
             <li className={isActive("/admin/users")} onClick={() => navigate("/admin/users")}>
               <FaUsers /> Quản lý Khách hàng
+            </li>
+            <li className={isActive("/admin/contacts")} onClick={() => navigate("/admin/contacts")}>
+              <FaEnvelope /> Hỗ trợ & Liên hệ
             </li>
           </ul>
         </div>

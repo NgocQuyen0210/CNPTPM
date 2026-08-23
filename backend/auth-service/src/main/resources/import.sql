@@ -16,7 +16,9 @@ INSERT INTO users (id, username, email, password, full_name, created_at, updated
 (10, 'nguyenvanh', 'vanh@gmail.com', '$2a$10$YTqAQmCU/FNMVLhwRqMm2uPMQtdbvEbtHhrlWWplbi0Gb27aLtPRm', 'Nguyễn Văn H', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 (11, 'nguyenvani', 'vani@gmail.com', '$2a$10$YTqAQmCU/FNMVLhwRqMm2uPMQtdbvEbtHhrlWWplbi0Gb27aLtPRm', 'Nguyễn Văn I', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 (12, 'nguyenvanj', 'vanj@gmail.com', '$2a$10$YTqAQmCU/FNMVLhwRqMm2uPMQtdbvEbtHhrlWWplbi0Gb27aLtPRm', 'Nguyễn Văn J', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-(13, 'nguyenvank', 'vank@gmail.com', '$2a$10$YTqAQmCU/FNMVLhwRqMm2uPMQtdbvEbtHhrlWWplbi0Gb27aLtPRm', 'Nguyễn Văn K', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+(13, 'nguyenvank', 'vank@gmail.com', '$2a$10$YTqAQmCU/FNMVLhwRqMm2uPMQtdbvEbtHhrlWWplbi0Gb27aLtPRm', 'Nguyễn Văn K', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(14, 'admin2', 'admin2@gmail.com', '$2a$10$YTqAQmCU/FNMVLhwRqMm2uPMQtdbvEbtHhrlWWplbi0Gb27aLtPRm', 'Quản Trị Viên 2', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(15, 'admin3', 'admin3@gmail.com', '$2a$10$YTqAQmCU/FNMVLhwRqMm2uPMQtdbvEbtHhrlWWplbi0Gb27aLtPRm', 'Quản Trị Viên 3', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 INSERT INTO users_roles (user_id, role_id) VALUES
 (1, 1),
@@ -31,7 +33,9 @@ INSERT INTO users_roles (user_id, role_id) VALUES
 (10, 2),
 (11, 2),
 (12, 2),
-(13, 2);
+(13, 2),
+(14, 1),
+(15, 1);
 
 INSERT INTO addresses (id, full_name, phone_number, province, district, ward, detail_address, is_default, user_id) VALUES
 (1, 'Nguyễn Văn A', '0987654321', 'Hà Nội', 'Cầu Giấy', 'Dịch Vọng', 'Số 10 Ngõ 2', true, 2),

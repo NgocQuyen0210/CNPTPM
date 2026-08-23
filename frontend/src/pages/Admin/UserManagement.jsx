@@ -26,7 +26,11 @@ function UserManagement() {
     setLoading(true);
     try {
       const res = await userService.getUsers();
-      setUsers(res || []);
+      // Chỉ hiển thị các tài khoản không có vai trò ADMIN (chỉ hiện tài khoản USER)
+      const customerUsers = (res || []).filter(
+        (user) => !user.roles || !user.roles.includes("ADMIN")
+      );
+      setUsers(customerUsers);
     } catch (error) {
       console.error("Lỗi lấy danh sách khách hàng:", error);
     } finally {
@@ -115,98 +119,112 @@ function UserManagement() {
   return (
     <div style={{ animation: "fadeIn 0.4s ease-out" }}>
       {/* Title */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-        <h2>Quản lý Khách hàng (Customers)</h2>
-        <button onClick={handleOpenCreateModal} className="btn-add-product">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "28px" }}>
+        <h2 style={{ fontSize: "2rem", fontWeight: "800", color: "var(--text-primary)" }}>
+          Quản lý Khách hàng (Customers)
+        </h2>
+        <button onClick={handleOpenCreateModal} className="btn-add-product" style={{ padding: "12px 24px", fontSize: "15px" }}>
           <FaPlus /> Thêm Khách hàng
         </button>
       </div>
 
-      {/* Search and Stats Grid */}
-      <div style={{ display: "flex", gap: "16px", marginBottom: "24px", flexWrap: "wrap", alignItems: "center" }}>
-        <div className="search-box" style={{ flex: 1, minWidth: "250px", display: "flex", alignItems: "center", gap: "8px", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "8px", padding: "8px 12px" }}>
-          <FaSearch style={{ color: "var(--text-muted)" }} />
+      {/* Search and Stats Bar */}
+      <div className="filter-bar" style={{ padding: "18px 24px", marginBottom: "28px" }}>
+        <div className="filter-search" style={{ flex: 1 }}>
+          <FaSearch className="filter-search-icon" style={{ fontSize: "17px" }} />
           <input 
             type="text" 
             placeholder="Tìm theo tên đăng nhập, email, họ tên..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ border: "none", outline: "none", background: "transparent", width: "100%", color: "var(--text-primary)" }}
+            style={{ fontSize: "15px", padding: "14px 16px 14px 48px" }}
           />
         </div>
-        <div style={{ fontWeight: "500", fontSize: "14px", color: "var(--text-muted)" }}>
-          Tổng số khách hàng: <span style={{ color: "var(--primary)", fontWeight: "600" }}>{users.length}</span>
+        <div style={{ fontWeight: "600", fontSize: "15px", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: "8px", paddingRight: "10px" }}>
+          Tổng số khách hàng: <span style={{ color: "var(--primary)", fontSize: "18px", fontWeight: "800" }}>{users.length}</span>
         </div>
       </div>
 
       {/* Users Table */}
       {loading ? (
-        <div style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
+        <div style={{ textAlign: "center", padding: "60px", color: "var(--text-muted)", fontSize: "16px" }}>
           Đang tải danh sách khách hàng...
         </div>
       ) : (
-        <div className="product-table-wrapper">
-          <table className="product-table">
+        <div style={{ overflowX: "auto" }}>
+          <table className="admin-table">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Tên đăng nhập</th>
-                <th>Họ và tên</th>
-                <th>Email</th>
-                <th>Vai trò</th>
-                <th style={{ textAlign: "center" }}>Thao tác</th>
+                <th style={{ width: "80px", fontSize: "15px", padding: "18px 16px" }}>ID</th>
+                <th style={{ textAlign: "left", fontSize: "15px", padding: "18px 16px" }}>Tên đăng nhập</th>
+                <th style={{ textAlign: "left", fontSize: "15px", padding: "18px 16px" }}>Họ và tên</th>
+                <th style={{ textAlign: "left", fontSize: "15px", padding: "18px 16px" }}>Email</th>
+                <th style={{ width: "160px", fontSize: "15px", padding: "18px 16px" }}>Vai trò</th>
+                <th style={{ width: "220px", textAlign: "center", fontSize: "15px", padding: "18px 16px" }}>Thao tác</th>
               </tr>
             </thead>
             <tbody>
               {filteredUsers.map((user) => (
                 <tr key={user.id}>
-                  <td>#{user.id}</td>
-                  <td>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: "600" }}>
-                      <FaUser style={{ color: "var(--primary)", fontSize: "0.9rem" }} />
+                  <td style={{ fontWeight: "700", fontSize: "14.5px", padding: "18px 16px" }}>#{user.id}</td>
+                  <td style={{ padding: "18px 16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", fontWeight: "700", fontSize: "15px", color: "var(--text-primary)" }}>
+                      <FaUser style={{ color: "var(--primary)", fontSize: "1.1rem" }} />
                       {user.username}
                     </div>
                   </td>
-                  <td>{user.fullName}</td>
-                  <td>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-muted)" }}>
-                      <FaEnvelope style={{ fontSize: "0.85rem" }} />
+                  <td style={{ fontWeight: "600", fontSize: "15px", color: "var(--text-primary)", textAlign: "left", padding: "18px 16px" }}>
+                    {user.fullName}
+                  </td>
+                  <td style={{ padding: "18px 16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "var(--text-secondary)", fontSize: "14.5px", textAlign: "left" }}>
+                      <FaEnvelope style={{ fontSize: "1rem", color: "var(--text-muted)" }} />
                       {user.email || "(Chưa cấu hình)"}
                     </div>
                   </td>
-                  <td>
-                    {user.roles && user.roles.map((role) => {
-                      const isAdm = role === "ADMIN";
-                      return (
-                        <span 
-                          key={role} 
-                          className="status-badge" 
-                          style={{ 
-                            background: isAdm ? "rgba(224, 86, 253, 0.15)" : "rgba(74, 105, 255, 0.15)",
-                            color: isAdm ? "var(--accent-pink)" : "var(--primary)",
-                            marginRight: "4px"
-                          }}
-                        >
-                          {role}
-                        </span>
-                      );
-                    })}
+                  <td style={{ padding: "18px 16px" }}>
+                    <div style={{ display: "flex", gap: "6px", justifyContent: "center" }}>
+                      {user.roles && user.roles.map((role) => {
+                        const isAdm = role === "ADMIN";
+                        return (
+                          <span 
+                            key={role} 
+                            className="badge" 
+                            style={{ 
+                              background: isAdm ? "rgba(8, 145, 178, 0.15)" : "rgba(13, 148, 136, 0.15)",
+                              color: isAdm ? "var(--accent-pink)" : "var(--primary)",
+                              border: isAdm ? "1px solid rgba(8, 145, 178, 0.25)" : "1px solid rgba(13, 148, 136, 0.25)",
+                              fontSize: "12px",
+                              padding: "6px 12px",
+                              fontWeight: "700",
+                              borderRadius: "20px",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.5px"
+                            }}
+                          >
+                            {role}
+                          </span>
+                        );
+                      })}
+                    </div>
                   </td>
-                  <td style={{ textAlign: "center" }}>
-                    <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
+                  <td style={{ textAlign: "center", padding: "18px 16px" }}>
+                    <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
                       <button 
                         onClick={() => handleOpenEditModal(user)} 
-                        className="btn-action edit" 
+                        className="btn-action-edit" 
                         title="Sửa thông tin"
+                        style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "8px 16px", fontSize: "13.5px" }}
                       >
-                        <FaEdit />
+                        <FaEdit /> Sửa
                       </button>
                       <button 
                         onClick={() => handleDelete(user.id)} 
-                        className="btn-action delete" 
+                        className="btn-action-delete" 
                         title="Xóa khách hàng"
+                        style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "8px 16px", fontSize: "13.5px" }}
                       >
-                        <FaTrash />
+                        <FaTrash /> Xóa
                       </button>
                     </div>
                   </td>
@@ -214,7 +232,7 @@ function UserManagement() {
               ))}
               {filteredUsers.length === 0 && (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
+                  <td colSpan="6" style={{ textAlign: "center", padding: "50px", color: "var(--text-muted)", fontSize: "15.5px" }}>
                     Không tìm thấy khách hàng nào khớp với từ khóa tìm kiếm.
                   </td>
                 </tr>
@@ -226,83 +244,98 @@ function UserManagement() {
 
       {/* Add/Edit Modal */}
       {showModal && (
-        <div className="modal-overlay">
-          <div className="modal-container" style={{ maxWidth: "500px" }}>
-            <div className="modal-header">
-              <h3>{editingId ? "Cập nhật Thông tin" : "Tạo Tài khoản Khách hàng"}</h3>
-              <button onClick={() => setShowModal(false)} className="modal-close-btn">
+        <div className="admin-modal-overlay">
+          <div className="admin-modal" style={{ maxWidth: "520px" }}>
+            <div className="admin-modal-header">
+              <h3>{editingId ? "Cập nhật Thông tin Khách hàng" : "Tạo Tài khoản Khách hàng"}</h3>
+              <button onClick={() => setShowModal(false)} className="btn-modal-close">
                 <FaTimes />
               </button>
             </div>
             
-            <form onSubmit={handleSave} className="modal-form">
-              <div className="form-group">
-                <label>Tên đăng nhập *</label>
-                <input 
-                  type="text" 
-                  value={form.username}
-                  onChange={(e) => setForm({ ...form, username: e.target.value })}
-                  placeholder="Nhập tên tài khoản"
-                  required
-                />
+            <form onSubmit={handleSave}>
+              <div className="admin-modal-body">
+                <div className="form-grid" style={{ gridTemplateColumns: "1fr", gap: "16px" }}>
+                  <div className="form-group">
+                    <label style={{ fontSize: "14px", fontWeight: "600", color: "var(--text-secondary)" }}>Tên đăng nhập *</label>
+                    <input 
+                      type="text" 
+                      value={form.username}
+                      onChange={(e) => setForm({ ...form, username: e.target.value })}
+                      placeholder="Nhập tên tài khoản"
+                      required
+                      style={{ padding: "11px 14px", fontSize: "14.5px" }}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label style={{ fontSize: "14px", fontWeight: "600", color: "var(--text-secondary)" }}>Họ và tên *</label>
+                    <input 
+                      type="text" 
+                      value={form.fullName}
+                      onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+                      placeholder="Nhập họ và tên đầy đủ"
+                      required
+                      style={{ padding: "11px 14px", fontSize: "14.5px" }}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label style={{ fontSize: "14px", fontWeight: "600", color: "var(--text-secondary)" }}>Địa chỉ Email *</label>
+                    <input 
+                      type="email" 
+                      value={form.email}
+                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                      placeholder="name@example.com"
+                      required
+                      style={{ padding: "11px 14px", fontSize: "14.5px" }}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label style={{ fontSize: "14px", fontWeight: "600", color: "var(--text-secondary)" }}>
+                      {editingId ? "Mật khẩu mới (Để trống nếu không đổi)" : "Mật khẩu *"}
+                    </label>
+                    <input 
+                      type="password" 
+                      value={form.password}
+                      onChange={(e) => setForm({ ...form, password: e.target.value })}
+                      placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
+                      required={!editingId}
+                      style={{ padding: "11px 14px", fontSize: "14.5px" }}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label style={{ fontSize: "14px", fontWeight: "600", color: "var(--text-secondary)" }}>
+                      {editingId ? "Xác nhận mật khẩu mới" : "Xác nhận mật khẩu *"}
+                    </label>
+                    <input 
+                      type="password" 
+                      value={form.confirmPassword}
+                      onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+                      placeholder="Nhập lại mật khẩu"
+                      required={!!form.password}
+                      style={{ padding: "11px 14px", fontSize: "14.5px" }}
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className="form-group">
-                <label>Họ và tên *</label>
-                <input 
-                  type="text" 
-                  value={form.fullName}
-                  onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                  placeholder="Nhập họ và tên đầy đủ"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Địa chỉ Email *</label>
-                <input 
-                  type="email" 
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="name@example.com"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>{editingId ? "Mật khẩu mới (Để trống nếu không đổi)" : "Mật khẩu *"}</label>
-                <input 
-                  type="password" 
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
-                  required={!editingId}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>{editingId ? "Xác nhận mật khẩu mới" : "Xác nhận mật khẩu *"}</label>
-                <input 
-                  type="password" 
-                  value={form.confirmPassword}
-                  onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-                  placeholder="Nhập lại mật khẩu"
-                  required={!!form.password}
-                />
-              </div>
-
-              <div className="modal-actions" style={{ marginTop: "24px" }}>
+              <div className="admin-modal-footer" style={{ padding: "16px 20px" }}>
                 <button 
                   type="button" 
                   onClick={() => setShowModal(false)} 
-                  className="btn-modal-cancel"
+                  className="btn-action-delete"
+                  style={{ padding: "10px 22px", fontSize: "14px" }}
                 >
                   Hủy
                 </button>
                 <button 
                   type="submit" 
                   disabled={isSubmitting} 
-                  className="btn-modal-save"
+                  className="btn-add-product"
+                  style={{ padding: "10px 26px", fontSize: "14px", boxShadow: "none" }}
                 >
                   {isSubmitting ? "Đang lưu..." : "Lưu thay đổi"}
                 </button>

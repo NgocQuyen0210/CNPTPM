@@ -1,25 +1,72 @@
-import React, { useState } from 'react';
-import { FaMapMarkerAlt, FaPhoneAlt, FaEnvelope, FaFacebook, FaInstagram, FaTwitter } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaMapMarkerAlt, FaPhoneAlt, FaEnvelope, FaFacebook, FaInstagram, FaTwitter, FaHistory, FaClock } from 'react-icons/fa';
+import contactService from '../../../services/contactService';
+import authService from '../../../services/authService';
 import './contact.css';
 
 function Contact() {
+  const user = authService.getUser();
+
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
+    name: user ? user.fullName || '' : '',
+    email: user ? user.email || '' : '',
     subject: '',
     message: ''
   });
+  
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [myMessages, setMyMessages] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  useEffect(() => {
+    if (user && user.email) {
+      fetchHistory();
+    }
+  }, [user?.email]);
+
+  const fetchHistory = async () => {
+    setLoadingHistory(true);
+    try {
+      const all = await contactService.getAllContacts();
+      // Filter contacts matching this customer's email
+      const filtered = all.filter(
+        c => c.email && c.email.toLowerCase() === user.email.toLowerCase()
+      );
+      setMyMessages(filtered);
+    } catch (err) {
+      console.error("Lỗi lấy lịch sử phản hồi:", err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
-    setFormData({ name: '', email: '', subject: '', message: '' });
+    setSubmitting(true);
+    try {
+      await contactService.sendContact(formData);
+      setSubmitted(true);
+      setTimeout(() => setSubmitted(false), 4000);
+      setFormData({
+        name: user ? user.fullName || '' : '',
+        email: user ? user.email || '' : '',
+        subject: '',
+        message: ''
+      });
+      if (user && user.email) {
+        fetchHistory();
+      }
+    } catch (err) {
+      console.error("Lỗi gửi tin nhắn liên hệ:", err);
+      alert("Không thể gửi tin nhắn liên hệ. Vui lòng thử lại sau.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -65,7 +112,7 @@ function Contact() {
             </div>
             <div>
               <h3>Email</h3>
-              <p>nhom7@gmail.com</p>
+              <p>ngocquyen0210@gmail.com</p>
             </div>
           </div>
 
@@ -125,12 +172,76 @@ function Contact() {
                 required
               ></textarea>
             </div>
-            <button type="submit" className="btn-submit">
-              Gửi Tin Nhắn
+            <button type="submit" className="btn-submit" disabled={submitting}>
+              {submitting ? 'Đang gửi...' : 'Gửi Tin Nhắn'}
             </button>
           </form>
         </div>
       </div>
+
+      {/* Contact History & Admin Replies Section */}
+      {user ? (
+        <div className="contact-history-section">
+          <div className="history-header">
+            <h2>
+              <FaHistory style={{ marginRight: '8px', color: 'var(--primary)' }} />
+              Lịch sử gửi liên hệ & Phản hồi từ Admin
+            </h2>
+            <p>Danh sách các câu hỏi bạn đã gửi và phản hồi chính thức từ ban quản trị cửa hàng.</p>
+          </div>
+
+          {loadingHistory ? (
+            <div className="history-loading">Đang tải lịch sử liên hệ...</div>
+          ) : myMessages.length === 0 ? (
+            <div className="history-empty">
+              Bạn chưa gửi câu hỏi hay yêu cầu hỗ trợ nào.
+            </div>
+          ) : (
+            <div className="history-list">
+              {myMessages.map((msg) => (
+                <div key={msg.id} className="history-item-card">
+                  <div className="history-item-header">
+                    <div className="subject-box">
+                      <span className="subject-title">{msg.subject}</span>
+                      <span className="message-date">{msg.createdAt}</span>
+                    </div>
+                    <span className={`status-badge ${msg.status.toLowerCase()}`}>
+                      {msg.status === 'PENDING' ? 'Chờ phản hồi' : 'Đã phản hồi'}
+                    </span>
+                  </div>
+
+                  <div className="customer-question-box">
+                    <div className="box-label">Câu hỏi của bạn:</div>
+                    <p>{msg.message}</p>
+                  </div>
+
+                  {msg.replies && msg.replies.length > 0 ? (
+                    <div className="admin-replies-box">
+                      <div className="box-label">Phản hồi từ Admin:</div>
+                      <div className="replies-thread">
+                        {msg.replies.map((rep) => (
+                          <div key={rep.id} className="reply-bubble-item">
+                            <div className="reply-meta">Hệ thống phản hồi lúc: {rep.createdAt}</div>
+                            <p className="reply-text-content">{rep.message}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="no-reply-box">
+                      <FaClock className="no-reply-icon" /> Đội ngũ hỗ trợ đang xem xét và sẽ trả lời bạn sớm nhất.
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="contact-login-prompt">
+          <p>💡 Hãy <strong>đăng nhập tài khoản</strong> để theo dõi lịch sử liên hệ và nhận câu trả lời phản hồi trực tiếp từ Admin tại đây.</p>
+        </div>
+      )}
     </div>
   );
 }

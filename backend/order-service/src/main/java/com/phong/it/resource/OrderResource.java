@@ -14,6 +14,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
 
+import jakarta.annotation.security.RolesAllowed;
+
 @Path("/api/v1/orders")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -43,6 +45,14 @@ public class OrderResource {
     public Response getOrderHistory() {
         Long userId = getUserId();
         List<OrderResponseDTO> orders = orderService.getOrderHistory(userId);
+        return Response.ok(ApiResponse.success(orders)).build();
+    }
+
+    @GET
+    @Path("/admin/all")
+    @RolesAllowed({"ADMIN"})
+    public Response getAllOrders() {
+        List<OrderResponseDTO> orders = orderService.getAllOrders();
         return Response.ok(ApiResponse.success(orders)).build();
     }
 

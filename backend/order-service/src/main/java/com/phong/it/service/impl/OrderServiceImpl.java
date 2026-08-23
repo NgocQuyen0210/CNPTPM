@@ -26,6 +26,8 @@ import jakarta.ws.rs.NotFoundException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -166,11 +168,27 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public List<OrderResponseDTO> getOrderHistory(Long userId) {
         List<Order> orders = orderRepository.findByUserId(userId);
+        Map<Long, ProductVariantResponseDTO> variantCache = new HashMap<>();
+        Map<Long, ProductResponseDTO> productCache = new HashMap<>();
         for (Order order : orders) {
             checkAndTransitionStatus(order);
         }
         return orders.stream()
-                .map(this::mapToResponseDTO)
+                .map(order -> this.mapToResponseDTO(order, variantCache, productCache))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public List<OrderResponseDTO> getAllOrders() {
+        List<Order> orders = orderRepository.listAll();
+        Map<Long, ProductVariantResponseDTO> variantCache = new HashMap<>();
+        Map<Long, ProductResponseDTO> productCache = new HashMap<>();
+        for (Order order : orders) {
+            checkAndTransitionStatus(order);
+        }
+        return orders.stream()
+                .map(order -> this.mapToResponseDTO(order, variantCache, productCache))
                 .collect(Collectors.toList());
     }
 
@@ -267,18 +285,39 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private OrderResponseDTO mapToResponseDTO(Order order) {
+        return mapToResponseDTO(order, new HashMap<>(), new HashMap<>());
+    }
+
+    private OrderResponseDTO mapToResponseDTO(Order order, 
+                                              Map<Long, ProductVariantResponseDTO> variantCache, 
+                                              Map<Long, ProductResponseDTO> productCache) {
         List<com.phong.it.dto.response.OrderItemResponseDTO> itemDTOs = new ArrayList<>();
         if (order.getOrderItems() != null) {
             for (OrderItem item : order.getOrderItems()) {
                 ProductVariantResponseDTO variant = null;
                 ProductResponseDTO product = null;
                 try {
-                    ApiResponse<ProductVariantResponseDTO> varResp = productServiceClient.getVariantById(item.getProductVariantId());
-                    if (varResp != null && varResp.success() && varResp.data() != null) {
-                        variant = varResp.data();
-                        ApiResponse<ProductResponseDTO> prodResp = productServiceClient.getProductById(variant.productId());
-                        if (prodResp != null && prodResp.success()) {
-                            product = prodResp.data();
+                    Long varId = item.getProductVariantId();
+                    if (variantCache.containsKey(varId)) {
+                        variant = variantCache.get(varId);
+                    } else {
+                        ApiResponse<ProductVariantResponseDTO> varResp = productServiceClient.getVariantById(varId);
+                        if (varResp != null && varResp.success() && varResp.data() != null) {
+                            variant = varResp.data();
+                            variantCache.put(varId, variant);
+                        }
+                    }
+
+                    if (variant != null) {
+                        Long prodId = variant.productId();
+                        if (productCache.containsKey(prodId)) {
+                            product = productCache.get(prodId);
+                        } else {
+                            ApiResponse<ProductResponseDTO> prodResp = productServiceClient.getProductById(prodId);
+                            if (prodResp != null && prodResp.success() && prodResp.data() != null) {
+                                product = prodResp.data();
+                                productCache.put(prodId, product);
+                            }
                         }
                     }
                 } catch (Exception e) {

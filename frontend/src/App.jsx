@@ -15,6 +15,7 @@ import AdminDashboard from "./pages/Admin/AdminDashboard";
 import CategoryManagement from "./pages/Admin/CategoryManagement";
 import ProductManagement from "./pages/Admin/ProductManagement";
 import UserManagement from "./pages/Admin/UserManagement";
+import ContactManagement from "./pages/Admin/ContactManagement";
 
 import CategoryPage from "./pages/Dashboard/Category/CategoryPage";
 import ProductDetail from "./pages/Dashboard/Product/ProductDetail";
@@ -63,6 +64,7 @@ function App() {
               <Route path="/admin/categories" element={<CategoryManagement />} />
               <Route path="/admin/products" element={<ProductManagement />} />
               <Route path="/admin/users" element={<UserManagement />} />
+              <Route path="/admin/contacts" element={<ContactManagement />} />
             </Route>
           </Route>
         </Routes>

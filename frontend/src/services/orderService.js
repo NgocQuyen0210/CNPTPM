@@ -24,6 +24,10 @@ const orderService = {
 
   updateStatus: (id, status) => {
     return apiClient.put(`/orders/${id}/status?status=${status}`, {}, { headers: getAuthHeaders() });
+  },
+
+  getAllOrdersForAdmin: () => {
+    return apiClient.get("/orders/admin/all", { headers: getAuthHeaders() });
   }
 };
 
