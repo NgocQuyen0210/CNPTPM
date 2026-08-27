@@ -1,8 +1,5 @@
 import React, { useEffect } from "react";
 import { FaBullseye, FaEye, FaUsers, FaLeaf } from "react-icons/fa";
-import phongImg from "../../../assets/image/Screenshot 2026-05-14 222511.png";
-import datImg from "../../../assets/image/dat.png";
-import duyenImg from "../../../assets/image/duyen.png";
 import "./aboutUs.css";
 
 function AboutUs() {
@@ -111,41 +108,6 @@ function AboutUs() {
         </div>
       </div>
 
-      {/* Team Section */}
-      <div className="about-team-section">
-        <div className="about-container">
-          <h2 className="section-title">Đội ngũ của chúng tôi</h2>
-          <div className="team-grid">
-            {/* Team Member 1 */}
-            <div className="team-card">
-              <img
-                src={phongImg}
-                alt="Thành viên 1"
-              />
-              <h3>Trương Văn Phong</h3>
-              <p>Backend Developer</p>
-            </div>
-            {/* Team Member 2 */}
-            <div className="team-card">
-              <img
-                src={datImg}
-                alt="Thành viên 2"
-              />
-              <h3>Nguyễn Thành Đạt</h3>
-              <p>Frontend Developer, UI/UX Designer</p>
-            </div>
-            {/* Team Member 3 */}
-            <div className="team-card">
-              <img
-                src={duyenImg}
-                alt="Thành viên 3"
-              />
-              <h3>Nguyễn Mỹ Duyên</h3>
-              <p>Document</p>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

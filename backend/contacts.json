@@ -4,8 +4,12 @@
   "email" : "test@gmail.com",
   "subject" : "Hoi ve san pham",
   "message" : "Toi muon hoi san pham nay con mau xanh la khong shop?",
-  "replies" : [ ],
-  "status" : "PENDING",
+  "replies" : [ {
+    "id" : 9,
+    "message" : "còn khách nhé \n",
+    "createdAt" : "2026-08-24 23:50:56"
+  } ],
+  "status" : "REPLIED",
   "createdAt" : "2026-08-21 19:18:24"
 }, {
   "id" : 2,

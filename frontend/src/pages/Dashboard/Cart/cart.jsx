@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaTrash, FaArrowLeft } from 'react-icons/fa';
 import { useCart } from '../../../context/CartContext';
+import { getFallbackImage } from '../../../services/imageService';
 import './cart.css';
 
 function Cart() {
@@ -46,7 +47,15 @@ function Cart() {
               {cart.map((item) => (
                 <tr key={item.id}>
                   <td className="product-col">
-                    <img src={item.image} alt={item.name} className="cart-item-img" />
+                    <img 
+                      src={item.image} 
+                      alt={item.name} 
+                      className="cart-item-img" 
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = getFallbackImage(item);
+                      }}
+                    />
                     <span className="cart-item-name">{item.name}</span>
                   </td>
                   <td className="price-col">

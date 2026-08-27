@@ -5,16 +5,16 @@ import categoryService from "../../../services/categoryService";
 import ProductCard from "../../../components/ProductCard/ProductCard";
 import "./menu.css";
 
-import menu1 from "../../../assets/image/menu1.jpg";
-import menu2 from "../../../assets/image/menu2.jpg";
-import menu3 from "../../../assets/image/menu3.jpg";
-
 import { 
   FaMobileAlt, FaLaptop, FaStore, FaHeadphones, 
   FaTabletAlt, FaClock, FaLayerGroup, FaCheckCircle, FaThLarge 
 } from "react-icons/fa";
 
-const images = [menu1, menu2, menu3];
+const images = [
+  "https://cdn2.cellphones.com.vn/x/media/catalog/product/i/p/iphone-17-pro-max_1_3.jpg", // iPhone 17 Pro Max
+  "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?q=80&w=1200&auto=format&fit=crop", // Laptop (MacBook màn hình rực rỡ)
+  "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1200&auto=format&fit=crop"  // Phụ kiện (Đồng hồ tối giản)
+];
 
 const mainCategoryConfigs = [
   {
@@ -320,8 +320,16 @@ function Menu() {
             </select>
           </div>
           
-          <div style={{ marginLeft: "auto", fontSize: "14px", color: "var(--text-muted)", fontWeight: "500" }}>
-            Hiển thị {filteredList.length} sản phẩm
+          <div style={{ marginLeft: "auto", fontSize: "14px", color: "var(--text-muted)", fontWeight: "500", display: "flex", alignItems: "center", gap: "6px" }}>
+            {filteredList.length === products.length ? (
+              <span>Tổng: <strong style={{ color: "var(--text-primary)" }}>{products.length}</strong> sản phẩm</span>
+            ) : (
+              <span>
+                Tìm thấy <strong style={{ color: "var(--primary, #a78bfa)" }}>{filteredList.length}</strong>
+                <span style={{ margin: "0 4px" }}>/</span>
+                Tổng <strong style={{ color: "var(--text-primary)" }}>{products.length}</strong> sản phẩm
+              </span>
+            )}
           </div>
         </div>
         

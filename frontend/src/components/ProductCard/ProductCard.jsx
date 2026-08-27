@@ -6,7 +6,9 @@ import { useFavorite } from "../../context/FavoriteContext";
 
 import { useNavigate } from "react-router-dom";
 
-function ProductCard({ id, image, featuredImage, name, price, originalPrice, discount, sold, status }) {
+import { getRealProductImage, getFallbackImage } from "../../services/imageService";
+
+function ProductCard({ id, image, featuredImage, name, price, originalPrice, discount, sold, status, brand, categoryId }) {
   const navigate = useNavigate();
   const [cartMsg, setCartMsg] = useState(false);
   const [buyMsg, setBuyMsg] = useState(false);
@@ -14,7 +16,8 @@ function ProductCard({ id, image, featuredImage, name, price, originalPrice, dis
   const { isFavorite, toggleFavorite } = useFavorite();
 
   const isLiked = isFavorite(id);
-  const displayImage = image || featuredImage;
+  const productObj = { id, image, featuredImage, name, brand, categoryId };
+  const displayImage = getRealProductImage(productObj);
 
   const handleFavorite = () => {
     toggleFavorite({ id, image: displayImage, name, price, originalPrice, discount, sold, status });
@@ -43,7 +46,15 @@ function ProductCard({ id, image, featuredImage, name, price, originalPrice, dis
     <div className="product-card" onClick={() => navigate(`/dashboard/product/${id}`)} style={{ cursor: "pointer" }}>
       {/* ===== ẢNH + OVERLAY ICONS ===== */}
       <div className="product-image-wrapper">
-        <img src={displayImage} alt={name} className="product-img" />
+        <img 
+          src={displayImage} 
+          alt={name} 
+          className="product-img" 
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = getFallbackImage(productObj);
+          }}
+        />
         {discount && <span className="product-discount">-{discount}%</span>}
 
         <div className="product-actions">

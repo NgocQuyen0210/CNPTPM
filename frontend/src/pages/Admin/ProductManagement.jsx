@@ -263,6 +263,11 @@ function ProductManagement() {
     return hasNoStock ? acc + 1 : acc;
   }, 0);
 
+  // Đếm theo trạng thái sản phẩm — giống dữ liệu user thấy
+  const sellingCount = products.filter(p => !p.status || p.status === "SELLING").length;
+  const comingSoonCount = products.filter(p => p.status === "COMING_SOON").length;
+  const outOfStockStatusCount = products.filter(p => p.status === "OUT_OF_STOCK").length;
+
   return (
     <div style={{ animation: "fadeIn 0.4s ease-out" }}>
       {/* Title */}
@@ -282,6 +287,21 @@ function ProductManagement() {
           <div className="stat-info">
             <h3>Tổng Sản phẩm</h3>
             <p>{products.length}</p>
+            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "6px" }}>
+              <span className="badge badge-green" style={{ fontSize: "10px", padding: "2px 6px" }}>
+                ✅ Đang bán: {sellingCount}
+              </span>
+              {comingSoonCount > 0 && (
+                <span className="badge badge-orange" style={{ fontSize: "10px", padding: "2px 6px" }}>
+                  🕐 Sắp về: {comingSoonCount}
+                </span>
+              )}
+              {outOfStockStatusCount > 0 && (
+                <span className="badge badge-pink" style={{ fontSize: "10px", padding: "2px 6px" }}>
+                  ❌ Hết hàng: {outOfStockStatusCount}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -364,6 +384,19 @@ function ProductManagement() {
             <option value="name-desc">Tên (Z-A)</option>
           </select>
         </div>
+      </div>
+
+      {/* Kết quả lọc — đồng bộ hiển thị giống trang user */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginBottom: "12px", fontSize: "13.5px", color: "var(--text-muted)", fontWeight: "500" }}>
+        {sortedProducts.length === products.length ? (
+          <span>Tổng: <strong style={{ color: "var(--text-primary)" }}>{products.length}</strong> sản phẩm</span>
+        ) : (
+          <span>
+            Đang lọc: <strong style={{ color: "var(--accent-pink)" }}>{sortedProducts.length}</strong>
+            <span style={{ margin: "0 6px" }}>/</span>
+            Tổng <strong style={{ color: "var(--text-primary)" }}>{products.length}</strong> sản phẩm
+          </span>
+        )}
       </div>
 
       {/* Products Table */}

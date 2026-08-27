@@ -37,6 +37,51 @@
   --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Dark Mode Override */
+html.dark, body.dark {
+  --bg-dark: #0f172a; /* Slate 900 */
+  --bg-deep: #020617; /* Slate 950 */
+  --bg-card: rgba(30, 41, 59, 0.7); /* Slate 800 */
+  --bg-card-hover: rgba(30, 41, 59, 0.9);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-color-hover: rgba(255, 255, 255, 0.25);
+
+  --primary: #14b8a6; /* Brighter Teal for Dark Mode contrast */
+  --primary-glow: rgba(20, 184, 166, 0.25);
+  --secondary: #0ea5e9; /* Brighter Sky Blue */
+  --secondary-glow: rgba(14, 165, 233, 0.25);
+  --accent-pink: #22d3ee; /* Brighter Cyan */
+  --accent-pink-glow: rgba(34, 211, 238, 0.25);
+
+  --text-primary: #f8fafc; /* Slate 50 */
+  --text-secondary: #cbd5e1; /* Slate 300 */
+  --text-muted: #94a3b8; /* Slate 400 */
+
+  --glass-bg: rgba(15, 23, 42, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+}
+
+html.dark body::before {
+  background: radial-gradient(circle, rgba(20, 184, 166, 0.15) 0%, transparent 70%);
+}
+
+html.dark body::after {
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, transparent 70%);
+}
+
+html.dark ::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
 /* Global Reset */
 * {
   margin: 0;
@@ -216,8 +261,8 @@ a {
 
 /* Premium Form Inputs */
 .premium-input {
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 10px;
   color: var(--text-primary);
   padding: 12px 16px;
@@ -228,8 +273,8 @@ a {
 
 .premium-input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
-  background: #fff;
+  box-shadow: 0 0 0 3px var(--primary-glow);
+  background: var(--bg-card-hover);
 }
 
 /* Premium Button styling */

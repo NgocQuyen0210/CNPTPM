@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { FaSearch, FaShoppingCart, FaHeart, FaUserCircle, FaSignOutAlt } from "react-icons/fa";
+import { FaSearch, FaShoppingCart, FaHeart, FaUserCircle, FaSignOutAlt, FaSun, FaMoon } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
 import { useFavorite } from "../../context/FavoriteContext";
 import authService from "../../services/authService";
@@ -12,6 +12,23 @@ function Header() {
   const { totalItems } = useCart();
   const { totalFavorites } = useFavorite();
   const [user, setUser] = useState(authService.getUser());
+
+  // Dark Mode State
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem("darkMode");
+    return saved === "true";
+  });
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+      document.body.classList.add("dark-mode");
+    } else {
+      document.documentElement.classList.remove("dark");
+      document.body.classList.remove("dark-mode");
+    }
+    localStorage.setItem("darkMode", darkMode);
+  }, [darkMode]);
 
   useEffect(() => {
     const handleUserUpdate = () => {
@@ -122,6 +139,7 @@ function Header() {
           </li>
           <li>
             <NavLink
+              id="header-cart-icon"
               to="/dashboard/cart"
               className={({ isActive }) => (isActive ? "active cart-link" : "cart-link")}
             >
@@ -177,6 +195,15 @@ function Header() {
 
       {/* Auth buttons */}
       <div className="header-auth">
+        {/* Nút bật tắt Dark Mode */}
+        <button 
+          className="btn-theme-toggle" 
+          onClick={() => setDarkMode(!darkMode)}
+          title={darkMode ? "Chuyển sang Chế độ sáng" : "Chuyển sang Chế độ tối"}
+        >
+          {darkMode ? <FaSun className="theme-toggle-icon sun" /> : <FaMoon className="theme-toggle-icon moon" />}
+        </button>
+
         {user ? (
           <>
             <div className="user-profile-badge" onClick={() => navigate("/dashboard/profile")} style={{ cursor: "pointer" }} title="Quản lý tài khoản">

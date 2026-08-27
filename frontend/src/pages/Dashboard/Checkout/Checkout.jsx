@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useCart } from "../../../context/CartContext";
 import orderService from "../../../services/orderService";
 import qrPaymentImg from "../../../assets/image/qr-payment.png";
+import { getFallbackImage } from "../../../services/imageService";
 import "./Checkout.css";
 
 function Checkout() {
@@ -131,7 +132,15 @@ function Checkout() {
           {cart.map(item => (
             <div key={item.id} className="summary-item">
               <div className="summary-item-left">
-                <img src={item.image} alt="img" className="summary-item-img" />
+                <img 
+                  src={item.image} 
+                  alt="img" 
+                  className="summary-item-img" 
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = getFallbackImage(item);
+                  }}
+                />
                 <div>
                   <div className="summary-item-name">{item.name}</div>
                   <div className="summary-item-qty">Số lượng: {item.quantity}</div>

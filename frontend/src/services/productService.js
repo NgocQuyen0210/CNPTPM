@@ -25,6 +25,14 @@ const productService = {
   },
 
   /**
+   * Lấy danh sách ảnh gallery theo ID sản phẩm
+   * @param {number|string} productId 
+   */
+  getProductImages: (productId) => {
+    return apiClient.get(`/product-images/product/${productId}`);
+  },
+
+  /**
    * Tạo sản phẩm mới
    * @param {Object} data - Dữ liệu Product Request DTO chuẩn
    * @example
